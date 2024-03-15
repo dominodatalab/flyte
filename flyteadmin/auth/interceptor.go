@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -19,11 +20,16 @@ func BlanketAuthorization(ctx context.Context, req interface{}, _ *grpc.UnarySer
 	}
 
 	if !identityContext.Scopes().Has(ScopeAll) {
+		s := "authenticated user doesn't have required scope"
 		logger.Debugf(ctx, "authenticated user doesn't have required scope")
+		s += fmt.Sprintf(" // authenticated user has %d scopes", identityContext.Scopes().Len())
+		s += fmt.Sprintf(" // dump %s %s %s %s %s %s", identityContext.appID, identityContext.audience, identityContext.executionIdentity,
+			identityContext.userID, identityContext.userInfo.Name, identityContext.userInfo.Subject)
 		for key := range identityContext.Scopes() {
 			logger.Debugf(ctx, "authenticated user has the scope %s", key)
+			s += fmt.Sprintf(" // authenticated user has the scope %s", key)
 		}
-		return nil, status.Errorf(codes.Unauthenticated, "authenticated user doesn't have required scope")
+		return nil, status.Errorf(codes.Unauthenticated, s)
 	}
 
 	return handler(ctx, req)
