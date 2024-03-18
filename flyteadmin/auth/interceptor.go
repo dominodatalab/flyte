@@ -21,8 +21,10 @@ func BlanketAuthorization(ctx context.Context, req interface{}, _ *grpc.UnarySer
 
 	if !identityContext.Scopes().Has(ScopeAll) {
 		s := "authenticated user doesn't have required scope"
+		logger.Debugf(ctx, "dump %s", s)
 		logger.Debugf(ctx, "authenticated user doesn't have required scope")
 		s += fmt.Sprintf(" // authenticated user has %d scopes", identityContext.Scopes().Len())
+		logger.Debugf(ctx, "dump %s", s)
 		s += fmt.Sprintf(" // dump %s %s %s %s %s %s", identityContext.appID, identityContext.audience, identityContext.executionIdentity,
 			identityContext.userID, identityContext.userInfo.Name, identityContext.userInfo.Subject)
 		logger.Debugf(ctx, "dump %s", s)
