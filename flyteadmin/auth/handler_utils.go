@@ -117,6 +117,7 @@ func GetPublicURL(ctx context.Context, req *http.Request, cfg *config.Config) *u
 	var hostAndPortMatching *url.URL
 
 	for i, authorized := range cfg.AuthorizedURIs {
+		logger.Debugf(ctx, "FOO %d, %v, %v", i, authorized, &cfg.AuthorizedURIs[i].URL)
 		if u == nil {
 			logger.Debugf(ctx, "FOO return &authorized.URL")
 			return &authorized.URL
