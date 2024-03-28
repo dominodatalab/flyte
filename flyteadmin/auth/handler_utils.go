@@ -118,6 +118,7 @@ func GetPublicURL(ctx context.Context, req *http.Request, cfg *config.Config) *u
 
 	for i, authorized := range cfg.AuthorizedURIs {
 		if u == nil {
+			logger.Debugf(ctx, "FOO return &authorized.URL")
 			return &authorized.URL
 		}
 
@@ -128,23 +129,28 @@ func GetPublicURL(ctx context.Context, req *http.Request, cfg *config.Config) *u
 			}
 
 			if u.Scheme == authorized.Scheme {
+				logger.Debugf(ctx, "FOO return &cfg.AuthorizedURIs[i].URL")
 				return &cfg.AuthorizedURIs[i].URL
 			}
 		}
 	}
 
 	if hostAndPortMatching != nil {
+		logger.Debugf(ctx, "FOO return hostAndPortMatching")
 		return hostAndPortMatching
 	}
 
 	if hostMatching != nil {
+		logger.Debugf(ctx, "FOO return hostMatching")
 		return hostMatching
 	}
 
 	if len(cfg.AuthorizedURIs) > 0 {
+		logger.Debugf(ctx, "FOO return &cfg.AuthorizedURIs[0].URL")
 		return &cfg.AuthorizedURIs[0].URL
 	}
 
+	logger.Debugf(ctx, "FOO return u")
 	return u
 }
 
