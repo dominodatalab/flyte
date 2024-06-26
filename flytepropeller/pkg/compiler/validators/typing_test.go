@@ -893,3 +893,10 @@ func TestStructuredDatasetCasting(t *testing.T) {
 		assert.True(t, castable, "StructuredDataset are nullable")
 	})
 }
+
+// TODO add tests for blob typechecker
+//
+// WIP test suite
+// assert.True(t, castable, "Blob(format='csv') should be castable to Blob()")
+// assert.True(t, castable, "Blob() should be castable to Blob()")
+// assert.False(t, castable, "Blob(format='csv') should not be castable to Blob('zip')")
