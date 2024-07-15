@@ -2,17 +2,21 @@
 package k8s
 
 import (
+	"context"
 	"fmt"
 	"hash/fnv"
 	"strings"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
 
 	"github.com/flyteorg/flyte/flyteidl/gen/pb-go/flyteidl/core"
 	"github.com/flyteorg/flyte/flytepropeller/pkg/apis/flyteworkflow/v1alpha1"
 	"github.com/flyteorg/flyte/flytepropeller/pkg/compiler/common"
 	"github.com/flyteorg/flyte/flytepropeller/pkg/compiler/errors"
+	"github.com/flyteorg/flyte/flytepropeller/pkg/controller/config"
 	"github.com/flyteorg/flyte/flytepropeller/pkg/utils"
+	"github.com/flyteorg/flyte/flytestdlib/logger"
 )
 
 const (
@@ -159,6 +163,20 @@ func generateName(wfID *core.Identifier, execID *core.WorkflowExecutionIdentifie
 	}
 }
 
+func hashIdentifier(identifier core.Identifier) uint64 {
+	h := fnv.New64()
+	_, err := h.Write([]byte(fmt.Sprintf("%s:%s:%s",
+		identifier.Project, identifier.Domain, identifier.Name)))
+	if err != nil {
+		// This shouldn't occur.
+		logger.Errorf(context.Background(),
+			"failed to hash launch plan identifier: %+v to get schedule name with err: %v", identifier, err)
+		return 0
+	}
+	logger.Debugf(context.Background(), "Returning hash for [%+v]: %d", identifier, h.Sum64())
+	return h.Sum64()
+}
+
 // BuildFlyteWorkflow builds v1alpha1.FlyteWorkflow resource. Returned error, if not nil, is of type errors.CompilerErrors.
 func BuildFlyteWorkflow(wfClosure *core.CompiledWorkflowClosure, inputs *core.LiteralMap,
 	executionID *core.WorkflowExecutionIdentifier, namespace string) (*v1alpha1.FlyteWorkflow, error) {
@@ -230,8 +248,24 @@ func BuildFlyteWorkflow(wfClosure *core.CompiledWorkflowClosure, inputs *core.Li
 	if err != nil {
 		errs.Collect(errors.NewWorkflowBuildError(err))
 	}
+	logger.Warnf(context.Background(),
+		"foo4 name, generatedName, label, project, domain: %v %v %v %v %v", name, generatedName, label, project, domain)
+	// foo name, generatedName, label, project, domain: amazingly-rare-longhorn-0e4p  amazingly-rare-longhorn-0e4p 668c2bc8bd6f4361cab82d62 development
+	hashedIdentifier := hashIdentifier(core.Identifier{
+		Project: project,
+		Domain:  domain,
+		Name:    name,
+	})
+	rand.Seed(int64(hashedIdentifier))
 
-	obj.ObjectMeta.Name = name
+	if workflowCRNameHashLength := config.GetConfig().WorkflowCRNameHashLength; workflowCRNameHashLength > 0 {
+		obj.ObjectMeta.Name = rand.String(workflowCRNameHashLength)
+		logger.Warnf(context.Background(), "foow1 %v %v", workflowCRNameHashLength, obj.ObjectMeta.GetName())
+	} else {
+		obj.ObjectMeta.Name = name
+		logger.Warnf(context.Background(), "foow0 %v", obj.ObjectMeta.GetName())
+		logger.Warnf(context.Background(), "foow0 %v %v", workflowCRNameHashLength, obj.ObjectMeta.GetName())
+	}
 	obj.ObjectMeta.GenerateName = generatedName
 	obj.ObjectMeta.Labels[ExecutionIDLabel] = label
 	obj.ObjectMeta.Labels[ProjectLabel] = project
