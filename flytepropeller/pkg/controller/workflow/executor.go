@@ -292,6 +292,7 @@ func convertToExecutionError(err *core.ExecutionError, alternateErr *core.Execut
 }
 
 func (c *workflowExecutor) IdempotentReportEvent(ctx context.Context, e *event.WorkflowExecutionEvent) error {
+	logger.Infof(ctx, "IdempotentReportEvent %+v %+v", e, c.wfRecorder)
 	err := c.wfRecorder.RecordWorkflowEvent(ctx, e, c.eventConfig)
 	if err != nil && eventsErr.IsAlreadyExists(err) {
 		logger.Infof(ctx, "Workflow event phase: %s, executionId %s already exist",
@@ -440,6 +441,9 @@ func (c *workflowExecutor) HandleFlyteWorkflow(ctx context.Context, w *v1alpha1.
 		return nil
 	case v1alpha1.WorkflowPhaseSucceeding:
 		newStatus := c.handleSucceedingWorkflow(ctx, w)
+
+		// try to start export, return error if fail
+		// error should trigger retry
 
 		if err := c.TransitionToPhase(ctx, w.ExecutionID.WorkflowExecutionIdentifier, wStatus, newStatus); err != nil {
 			return err
