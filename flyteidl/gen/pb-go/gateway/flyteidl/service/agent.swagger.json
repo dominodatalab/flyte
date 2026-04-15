@@ -1960,6 +1960,38 @@
         "pod_template": {
           "$ref": "#/definitions/coreK8sPod",
           "title": "Override for the pod template used by task pods\n+optional"
+        },
+        "cache": {
+          "type": "boolean",
+          "title": "Boolean that indicates if caching should be enabled"
+        },
+        "cache_serialize": {
+          "type": "boolean",
+          "description": "Boolean that indicates if identical (ie. same inputs) instances of this task should be\nexecuted in serial when caching is enabled."
+        },
+        "cache_version": {
+          "type": "string",
+          "title": "Cache version to use"
+        },
+        "retries": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Number of times to retry this task during a workflow execution"
+        },
+        "interruptible": {
+          "type": "boolean",
+          "title": "Boolean that indicates that this task can be interrupted and/or scheduled on nodes with lower QoS guarantees"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Environment variables that should be added for this tasks execution"
+        },
+        "task_config": {
+          "type": "object",
+          "description": "This argument provides configuration for a specific task types."
         }
       },
       "description": "Optional task node overrides that will be applied at task execution time."

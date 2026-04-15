@@ -12633,6 +12633,13 @@
                  * @property {flyteidl.core.IExtendedResources|null} [extendedResources] TaskNodeOverrides extendedResources
                  * @property {string|null} [containerImage] TaskNodeOverrides containerImage
                  * @property {flyteidl.core.IK8sPod|null} [podTemplate] TaskNodeOverrides podTemplate
+                 * @property {boolean|null} [cache] TaskNodeOverrides cache
+                 * @property {boolean|null} [cacheSerialize] TaskNodeOverrides cacheSerialize
+                 * @property {string|null} [cacheVersion] TaskNodeOverrides cacheVersion
+                 * @property {number|null} [retries] TaskNodeOverrides retries
+                 * @property {boolean|null} [interruptible] TaskNodeOverrides interruptible
+                 * @property {Object.<string,string>|null} [environment] TaskNodeOverrides environment
+                 * @property {google.protobuf.IStruct|null} [taskConfig] TaskNodeOverrides taskConfig
                  */
     
                 /**
@@ -12644,6 +12651,7 @@
                  * @param {flyteidl.core.ITaskNodeOverrides=} [properties] Properties to set
                  */
                 function TaskNodeOverrides(properties) {
+                    this.environment = {};
                     if (properties)
                         for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
@@ -12683,6 +12691,62 @@
                 TaskNodeOverrides.prototype.podTemplate = null;
     
                 /**
+                 * TaskNodeOverrides cache.
+                 * @member {boolean} cache
+                 * @memberof flyteidl.core.TaskNodeOverrides
+                 * @instance
+                 */
+                TaskNodeOverrides.prototype.cache = false;
+    
+                /**
+                 * TaskNodeOverrides cacheSerialize.
+                 * @member {boolean} cacheSerialize
+                 * @memberof flyteidl.core.TaskNodeOverrides
+                 * @instance
+                 */
+                TaskNodeOverrides.prototype.cacheSerialize = false;
+    
+                /**
+                 * TaskNodeOverrides cacheVersion.
+                 * @member {string} cacheVersion
+                 * @memberof flyteidl.core.TaskNodeOverrides
+                 * @instance
+                 */
+                TaskNodeOverrides.prototype.cacheVersion = "";
+    
+                /**
+                 * TaskNodeOverrides retries.
+                 * @member {number} retries
+                 * @memberof flyteidl.core.TaskNodeOverrides
+                 * @instance
+                 */
+                TaskNodeOverrides.prototype.retries = 0;
+    
+                /**
+                 * TaskNodeOverrides interruptible.
+                 * @member {boolean} interruptible
+                 * @memberof flyteidl.core.TaskNodeOverrides
+                 * @instance
+                 */
+                TaskNodeOverrides.prototype.interruptible = false;
+    
+                /**
+                 * TaskNodeOverrides environment.
+                 * @member {Object.<string,string>} environment
+                 * @memberof flyteidl.core.TaskNodeOverrides
+                 * @instance
+                 */
+                TaskNodeOverrides.prototype.environment = $util.emptyObject;
+    
+                /**
+                 * TaskNodeOverrides taskConfig.
+                 * @member {google.protobuf.IStruct|null|undefined} taskConfig
+                 * @memberof flyteidl.core.TaskNodeOverrides
+                 * @instance
+                 */
+                TaskNodeOverrides.prototype.taskConfig = null;
+    
+                /**
                  * Creates a new TaskNodeOverrides instance using the specified properties.
                  * @function create
                  * @memberof flyteidl.core.TaskNodeOverrides
@@ -12714,6 +12778,21 @@
                         writer.uint32(/* id 3, wireType 2 =*/26).string(message.containerImage);
                     if (message.podTemplate != null && message.hasOwnProperty("podTemplate"))
                         $root.flyteidl.core.K8sPod.encode(message.podTemplate, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+                    if (message.cache != null && message.hasOwnProperty("cache"))
+                        writer.uint32(/* id 5, wireType 0 =*/40).bool(message.cache);
+                    if (message.cacheSerialize != null && message.hasOwnProperty("cacheSerialize"))
+                        writer.uint32(/* id 6, wireType 0 =*/48).bool(message.cacheSerialize);
+                    if (message.cacheVersion != null && message.hasOwnProperty("cacheVersion"))
+                        writer.uint32(/* id 7, wireType 2 =*/58).string(message.cacheVersion);
+                    if (message.retries != null && message.hasOwnProperty("retries"))
+                        writer.uint32(/* id 8, wireType 0 =*/64).int32(message.retries);
+                    if (message.interruptible != null && message.hasOwnProperty("interruptible"))
+                        writer.uint32(/* id 9, wireType 0 =*/72).bool(message.interruptible);
+                    if (message.environment != null && message.hasOwnProperty("environment"))
+                        for (var keys = Object.keys(message.environment), i = 0; i < keys.length; ++i)
+                            writer.uint32(/* id 10, wireType 2 =*/82).fork().uint32(/* id 1, wireType 2 =*/10).string(keys[i]).uint32(/* id 2, wireType 2 =*/18).string(message.environment[keys[i]]).ldelim();
+                    if (message.taskConfig != null && message.hasOwnProperty("taskConfig"))
+                        $root.google.protobuf.Struct.encode(message.taskConfig, writer.uint32(/* id 11, wireType 2 =*/90).fork()).ldelim();
                     return writer;
                 };
     
@@ -12731,7 +12810,7 @@
                 TaskNodeOverrides.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.flyteidl.core.TaskNodeOverrides();
+                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.flyteidl.core.TaskNodeOverrides(), key;
                     while (reader.pos < end) {
                         var tag = reader.uint32();
                         switch (tag >>> 3) {
@@ -12746,6 +12825,32 @@
                             break;
                         case 4:
                             message.podTemplate = $root.flyteidl.core.K8sPod.decode(reader, reader.uint32());
+                            break;
+                        case 5:
+                            message.cache = reader.bool();
+                            break;
+                        case 6:
+                            message.cacheSerialize = reader.bool();
+                            break;
+                        case 7:
+                            message.cacheVersion = reader.string();
+                            break;
+                        case 8:
+                            message.retries = reader.int32();
+                            break;
+                        case 9:
+                            message.interruptible = reader.bool();
+                            break;
+                        case 10:
+                            reader.skip().pos++;
+                            if (message.environment === $util.emptyObject)
+                                message.environment = {};
+                            key = reader.string();
+                            reader.pos++;
+                            message.environment[key] = reader.string();
+                            break;
+                        case 11:
+                            message.taskConfig = $root.google.protobuf.Struct.decode(reader, reader.uint32());
                             break;
                         default:
                             reader.skipType(tag & 7);
@@ -12784,10 +12889,296 @@
                         if (error)
                             return "podTemplate." + error;
                     }
+                    if (message.cache != null && message.hasOwnProperty("cache"))
+                        if (typeof message.cache !== "boolean")
+                            return "cache: boolean expected";
+                    if (message.cacheSerialize != null && message.hasOwnProperty("cacheSerialize"))
+                        if (typeof message.cacheSerialize !== "boolean")
+                            return "cacheSerialize: boolean expected";
+                    if (message.cacheVersion != null && message.hasOwnProperty("cacheVersion"))
+                        if (!$util.isString(message.cacheVersion))
+                            return "cacheVersion: string expected";
+                    if (message.retries != null && message.hasOwnProperty("retries"))
+                        if (!$util.isInteger(message.retries))
+                            return "retries: integer expected";
+                    if (message.interruptible != null && message.hasOwnProperty("interruptible"))
+                        if (typeof message.interruptible !== "boolean")
+                            return "interruptible: boolean expected";
+                    if (message.environment != null && message.hasOwnProperty("environment")) {
+                        if (!$util.isObject(message.environment))
+                            return "environment: object expected";
+                        var key = Object.keys(message.environment);
+                        for (var i = 0; i < key.length; ++i)
+                            if (!$util.isString(message.environment[key[i]]))
+                                return "environment: string{k:string} expected";
+                    }
+                    if (message.taskConfig != null && message.hasOwnProperty("taskConfig")) {
+                        var error = $root.google.protobuf.Struct.verify(message.taskConfig);
+                        if (error)
+                            return "taskConfig." + error;
+                    }
                     return null;
                 };
     
                 return TaskNodeOverrides;
+            })();
+    
+            core.RuntimeTaskNodeOverrides = (function() {
+    
+                /**
+                 * Properties of a RuntimeTaskNodeOverrides.
+                 * @memberof flyteidl.core
+                 * @interface IRuntimeTaskNodeOverrides
+                 * @property {flyteidl.core.IRuntimeTaskNodeOverrideTarget|null} [target] RuntimeTaskNodeOverrides target
+                 * @property {flyteidl.core.ITaskNodeOverrides|null} [overrides] RuntimeTaskNodeOverrides overrides
+                 */
+    
+                /**
+                 * Constructs a new RuntimeTaskNodeOverrides.
+                 * @memberof flyteidl.core
+                 * @classdesc Represents a RuntimeTaskNodeOverrides.
+                 * @implements IRuntimeTaskNodeOverrides
+                 * @constructor
+                 * @param {flyteidl.core.IRuntimeTaskNodeOverrides=} [properties] Properties to set
+                 */
+                function RuntimeTaskNodeOverrides(properties) {
+                    if (properties)
+                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                            if (properties[keys[i]] != null)
+                                this[keys[i]] = properties[keys[i]];
+                }
+    
+                /**
+                 * RuntimeTaskNodeOverrides target.
+                 * @member {flyteidl.core.IRuntimeTaskNodeOverrideTarget|null|undefined} target
+                 * @memberof flyteidl.core.RuntimeTaskNodeOverrides
+                 * @instance
+                 */
+                RuntimeTaskNodeOverrides.prototype.target = null;
+    
+                /**
+                 * RuntimeTaskNodeOverrides overrides.
+                 * @member {flyteidl.core.ITaskNodeOverrides|null|undefined} overrides
+                 * @memberof flyteidl.core.RuntimeTaskNodeOverrides
+                 * @instance
+                 */
+                RuntimeTaskNodeOverrides.prototype.overrides = null;
+    
+                /**
+                 * Creates a new RuntimeTaskNodeOverrides instance using the specified properties.
+                 * @function create
+                 * @memberof flyteidl.core.RuntimeTaskNodeOverrides
+                 * @static
+                 * @param {flyteidl.core.IRuntimeTaskNodeOverrides=} [properties] Properties to set
+                 * @returns {flyteidl.core.RuntimeTaskNodeOverrides} RuntimeTaskNodeOverrides instance
+                 */
+                RuntimeTaskNodeOverrides.create = function create(properties) {
+                    return new RuntimeTaskNodeOverrides(properties);
+                };
+    
+                /**
+                 * Encodes the specified RuntimeTaskNodeOverrides message. Does not implicitly {@link flyteidl.core.RuntimeTaskNodeOverrides.verify|verify} messages.
+                 * @function encode
+                 * @memberof flyteidl.core.RuntimeTaskNodeOverrides
+                 * @static
+                 * @param {flyteidl.core.IRuntimeTaskNodeOverrides} message RuntimeTaskNodeOverrides message or plain object to encode
+                 * @param {$protobuf.Writer} [writer] Writer to encode to
+                 * @returns {$protobuf.Writer} Writer
+                 */
+                RuntimeTaskNodeOverrides.encode = function encode(message, writer) {
+                    if (!writer)
+                        writer = $Writer.create();
+                    if (message.target != null && message.hasOwnProperty("target"))
+                        $root.flyteidl.core.RuntimeTaskNodeOverrideTarget.encode(message.target, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                    if (message.overrides != null && message.hasOwnProperty("overrides"))
+                        $root.flyteidl.core.TaskNodeOverrides.encode(message.overrides, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+                    return writer;
+                };
+    
+                /**
+                 * Decodes a RuntimeTaskNodeOverrides message from the specified reader or buffer.
+                 * @function decode
+                 * @memberof flyteidl.core.RuntimeTaskNodeOverrides
+                 * @static
+                 * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+                 * @param {number} [length] Message length if known beforehand
+                 * @returns {flyteidl.core.RuntimeTaskNodeOverrides} RuntimeTaskNodeOverrides
+                 * @throws {Error} If the payload is not a reader or valid buffer
+                 * @throws {$protobuf.util.ProtocolError} If required fields are missing
+                 */
+                RuntimeTaskNodeOverrides.decode = function decode(reader, length) {
+                    if (!(reader instanceof $Reader))
+                        reader = $Reader.create(reader);
+                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.flyteidl.core.RuntimeTaskNodeOverrides();
+                    while (reader.pos < end) {
+                        var tag = reader.uint32();
+                        switch (tag >>> 3) {
+                        case 1:
+                            message.target = $root.flyteidl.core.RuntimeTaskNodeOverrideTarget.decode(reader, reader.uint32());
+                            break;
+                        case 2:
+                            message.overrides = $root.flyteidl.core.TaskNodeOverrides.decode(reader, reader.uint32());
+                            break;
+                        default:
+                            reader.skipType(tag & 7);
+                            break;
+                        }
+                    }
+                    return message;
+                };
+    
+                /**
+                 * Verifies a RuntimeTaskNodeOverrides message.
+                 * @function verify
+                 * @memberof flyteidl.core.RuntimeTaskNodeOverrides
+                 * @static
+                 * @param {Object.<string,*>} message Plain object to verify
+                 * @returns {string|null} `null` if valid, otherwise the reason why it is not
+                 */
+                RuntimeTaskNodeOverrides.verify = function verify(message) {
+                    if (typeof message !== "object" || message === null)
+                        return "object expected";
+                    if (message.target != null && message.hasOwnProperty("target")) {
+                        var error = $root.flyteidl.core.RuntimeTaskNodeOverrideTarget.verify(message.target);
+                        if (error)
+                            return "target." + error;
+                    }
+                    if (message.overrides != null && message.hasOwnProperty("overrides")) {
+                        var error = $root.flyteidl.core.TaskNodeOverrides.verify(message.overrides);
+                        if (error)
+                            return "overrides." + error;
+                    }
+                    return null;
+                };
+    
+                return RuntimeTaskNodeOverrides;
+            })();
+    
+            core.RuntimeTaskNodeOverrideTarget = (function() {
+    
+                /**
+                 * Properties of a RuntimeTaskNodeOverrideTarget.
+                 * @memberof flyteidl.core
+                 * @interface IRuntimeTaskNodeOverrideTarget
+                 * @property {string|null} [taskType] RuntimeTaskNodeOverrideTarget taskType
+                 * @property {string|null} [taskName] RuntimeTaskNodeOverrideTarget taskName
+                 */
+    
+                /**
+                 * Constructs a new RuntimeTaskNodeOverrideTarget.
+                 * @memberof flyteidl.core
+                 * @classdesc Represents a RuntimeTaskNodeOverrideTarget.
+                 * @implements IRuntimeTaskNodeOverrideTarget
+                 * @constructor
+                 * @param {flyteidl.core.IRuntimeTaskNodeOverrideTarget=} [properties] Properties to set
+                 */
+                function RuntimeTaskNodeOverrideTarget(properties) {
+                    if (properties)
+                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                            if (properties[keys[i]] != null)
+                                this[keys[i]] = properties[keys[i]];
+                }
+    
+                /**
+                 * RuntimeTaskNodeOverrideTarget taskType.
+                 * @member {string} taskType
+                 * @memberof flyteidl.core.RuntimeTaskNodeOverrideTarget
+                 * @instance
+                 */
+                RuntimeTaskNodeOverrideTarget.prototype.taskType = "";
+    
+                /**
+                 * RuntimeTaskNodeOverrideTarget taskName.
+                 * @member {string} taskName
+                 * @memberof flyteidl.core.RuntimeTaskNodeOverrideTarget
+                 * @instance
+                 */
+                RuntimeTaskNodeOverrideTarget.prototype.taskName = "";
+    
+                /**
+                 * Creates a new RuntimeTaskNodeOverrideTarget instance using the specified properties.
+                 * @function create
+                 * @memberof flyteidl.core.RuntimeTaskNodeOverrideTarget
+                 * @static
+                 * @param {flyteidl.core.IRuntimeTaskNodeOverrideTarget=} [properties] Properties to set
+                 * @returns {flyteidl.core.RuntimeTaskNodeOverrideTarget} RuntimeTaskNodeOverrideTarget instance
+                 */
+                RuntimeTaskNodeOverrideTarget.create = function create(properties) {
+                    return new RuntimeTaskNodeOverrideTarget(properties);
+                };
+    
+                /**
+                 * Encodes the specified RuntimeTaskNodeOverrideTarget message. Does not implicitly {@link flyteidl.core.RuntimeTaskNodeOverrideTarget.verify|verify} messages.
+                 * @function encode
+                 * @memberof flyteidl.core.RuntimeTaskNodeOverrideTarget
+                 * @static
+                 * @param {flyteidl.core.IRuntimeTaskNodeOverrideTarget} message RuntimeTaskNodeOverrideTarget message or plain object to encode
+                 * @param {$protobuf.Writer} [writer] Writer to encode to
+                 * @returns {$protobuf.Writer} Writer
+                 */
+                RuntimeTaskNodeOverrideTarget.encode = function encode(message, writer) {
+                    if (!writer)
+                        writer = $Writer.create();
+                    if (message.taskType != null && message.hasOwnProperty("taskType"))
+                        writer.uint32(/* id 1, wireType 2 =*/10).string(message.taskType);
+                    if (message.taskName != null && message.hasOwnProperty("taskName"))
+                        writer.uint32(/* id 2, wireType 2 =*/18).string(message.taskName);
+                    return writer;
+                };
+    
+                /**
+                 * Decodes a RuntimeTaskNodeOverrideTarget message from the specified reader or buffer.
+                 * @function decode
+                 * @memberof flyteidl.core.RuntimeTaskNodeOverrideTarget
+                 * @static
+                 * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+                 * @param {number} [length] Message length if known beforehand
+                 * @returns {flyteidl.core.RuntimeTaskNodeOverrideTarget} RuntimeTaskNodeOverrideTarget
+                 * @throws {Error} If the payload is not a reader or valid buffer
+                 * @throws {$protobuf.util.ProtocolError} If required fields are missing
+                 */
+                RuntimeTaskNodeOverrideTarget.decode = function decode(reader, length) {
+                    if (!(reader instanceof $Reader))
+                        reader = $Reader.create(reader);
+                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.flyteidl.core.RuntimeTaskNodeOverrideTarget();
+                    while (reader.pos < end) {
+                        var tag = reader.uint32();
+                        switch (tag >>> 3) {
+                        case 1:
+                            message.taskType = reader.string();
+                            break;
+                        case 2:
+                            message.taskName = reader.string();
+                            break;
+                        default:
+                            reader.skipType(tag & 7);
+                            break;
+                        }
+                    }
+                    return message;
+                };
+    
+                /**
+                 * Verifies a RuntimeTaskNodeOverrideTarget message.
+                 * @function verify
+                 * @memberof flyteidl.core.RuntimeTaskNodeOverrideTarget
+                 * @static
+                 * @param {Object.<string,*>} message Plain object to verify
+                 * @returns {string|null} `null` if valid, otherwise the reason why it is not
+                 */
+                RuntimeTaskNodeOverrideTarget.verify = function verify(message) {
+                    if (typeof message !== "object" || message === null)
+                        return "object expected";
+                    if (message.taskType != null && message.hasOwnProperty("taskType"))
+                        if (!$util.isString(message.taskType))
+                            return "taskType: string expected";
+                    if (message.taskName != null && message.hasOwnProperty("taskName"))
+                        if (!$util.isString(message.taskName))
+                            return "taskName: string expected";
+                    return null;
+                };
+    
+                return RuntimeTaskNodeOverrideTarget;
             })();
     
             core.LaunchPlanTemplate = (function() {
@@ -36030,6 +36421,7 @@
                  * @property {flyteidl.admin.ILabels|null} [labels] ExecutionSpec labels
                  * @property {flyteidl.admin.IAnnotations|null} [annotations] ExecutionSpec annotations
                  * @property {flyteidl.core.ISecurityContext|null} [securityContext] ExecutionSpec securityContext
+                 * @property {Array.<flyteidl.core.IRuntimeTaskNodeOverrides>|null} [runtimeOverrides] ExecutionSpec runtimeOverrides
                  * @property {flyteidl.admin.IAuthRole|null} [authRole] ExecutionSpec authRole
                  * @property {flyteidl.core.IQualityOfService|null} [qualityOfService] ExecutionSpec qualityOfService
                  * @property {number|null} [maxParallelism] ExecutionSpec maxParallelism
@@ -36052,6 +36444,7 @@
                  * @param {flyteidl.admin.IExecutionSpec=} [properties] Properties to set
                  */
                 function ExecutionSpec(properties) {
+                    this.runtimeOverrides = [];
                     this.tags = [];
                     this.executionEnvAssignments = [];
                     if (properties)
@@ -36123,6 +36516,14 @@
                  * @instance
                  */
                 ExecutionSpec.prototype.securityContext = null;
+    
+                /**
+                 * ExecutionSpec runtimeOverrides.
+                 * @member {Array.<flyteidl.core.IRuntimeTaskNodeOverrides>} runtimeOverrides
+                 * @memberof flyteidl.admin.ExecutionSpec
+                 * @instance
+                 */
+                ExecutionSpec.prototype.runtimeOverrides = $util.emptyArray;
     
                 /**
                  * ExecutionSpec authRole.
@@ -36266,6 +36667,9 @@
                         $root.flyteidl.admin.Annotations.encode(message.annotations, writer.uint32(/* id 8, wireType 2 =*/66).fork()).ldelim();
                     if (message.securityContext != null && message.hasOwnProperty("securityContext"))
                         $root.flyteidl.core.SecurityContext.encode(message.securityContext, writer.uint32(/* id 10, wireType 2 =*/82).fork()).ldelim();
+                    if (message.runtimeOverrides != null && message.runtimeOverrides.length)
+                        for (var i = 0; i < message.runtimeOverrides.length; ++i)
+                            $root.flyteidl.core.RuntimeTaskNodeOverrides.encode(message.runtimeOverrides[i], writer.uint32(/* id 11, wireType 2 =*/90).fork()).ldelim();
                     if (message.authRole != null && message.hasOwnProperty("authRole"))
                         $root.flyteidl.admin.AuthRole.encode(message.authRole, writer.uint32(/* id 16, wireType 2 =*/130).fork()).ldelim();
                     if (message.qualityOfService != null && message.hasOwnProperty("qualityOfService"))
@@ -36334,6 +36738,11 @@
                             break;
                         case 10:
                             message.securityContext = $root.flyteidl.core.SecurityContext.decode(reader, reader.uint32());
+                            break;
+                        case 11:
+                            if (!(message.runtimeOverrides && message.runtimeOverrides.length))
+                                message.runtimeOverrides = [];
+                            message.runtimeOverrides.push($root.flyteidl.core.RuntimeTaskNodeOverrides.decode(reader, reader.uint32()));
                             break;
                         case 16:
                             message.authRole = $root.flyteidl.admin.AuthRole.decode(reader, reader.uint32());
@@ -36436,6 +36845,15 @@
                         var error = $root.flyteidl.core.SecurityContext.verify(message.securityContext);
                         if (error)
                             return "securityContext." + error;
+                    }
+                    if (message.runtimeOverrides != null && message.hasOwnProperty("runtimeOverrides")) {
+                        if (!Array.isArray(message.runtimeOverrides))
+                            return "runtimeOverrides: array expected";
+                        for (var i = 0; i < message.runtimeOverrides.length; ++i) {
+                            var error = $root.flyteidl.core.RuntimeTaskNodeOverrides.verify(message.runtimeOverrides[i]);
+                            if (error)
+                                return "runtimeOverrides." + error;
+                        }
                     }
                     if (message.authRole != null && message.hasOwnProperty("authRole")) {
                         var error = $root.flyteidl.admin.AuthRole.verify(message.authRole);
@@ -40301,6 +40719,7 @@
                  * @property {flyteidl.admin.IAuth|null} [auth] LaunchPlanSpec auth
                  * @property {flyteidl.admin.IAuthRole|null} [authRole] LaunchPlanSpec authRole
                  * @property {flyteidl.core.ISecurityContext|null} [securityContext] LaunchPlanSpec securityContext
+                 * @property {Array.<flyteidl.core.IRuntimeTaskNodeOverrides>|null} [runtimeOverrides] LaunchPlanSpec runtimeOverrides
                  * @property {flyteidl.core.IQualityOfService|null} [qualityOfService] LaunchPlanSpec qualityOfService
                  * @property {flyteidl.admin.IRawOutputDataConfig|null} [rawOutputDataConfig] LaunchPlanSpec rawOutputDataConfig
                  * @property {number|null} [maxParallelism] LaunchPlanSpec maxParallelism
@@ -40321,6 +40740,7 @@
                  * @param {flyteidl.admin.ILaunchPlanSpec=} [properties] Properties to set
                  */
                 function LaunchPlanSpec(properties) {
+                    this.runtimeOverrides = [];
                     this.executionEnvAssignments = [];
                     if (properties)
                         for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -40407,6 +40827,14 @@
                  * @instance
                  */
                 LaunchPlanSpec.prototype.securityContext = null;
+    
+                /**
+                 * LaunchPlanSpec runtimeOverrides.
+                 * @member {Array.<flyteidl.core.IRuntimeTaskNodeOverrides>} runtimeOverrides
+                 * @memberof flyteidl.admin.LaunchPlanSpec
+                 * @instance
+                 */
+                LaunchPlanSpec.prototype.runtimeOverrides = $util.emptyArray;
     
                 /**
                  * LaunchPlanSpec qualityOfService.
@@ -40524,6 +40952,9 @@
                         $root.flyteidl.admin.AuthRole.encode(message.authRole, writer.uint32(/* id 9, wireType 2 =*/74).fork()).ldelim();
                     if (message.securityContext != null && message.hasOwnProperty("securityContext"))
                         $root.flyteidl.core.SecurityContext.encode(message.securityContext, writer.uint32(/* id 10, wireType 2 =*/82).fork()).ldelim();
+                    if (message.runtimeOverrides != null && message.runtimeOverrides.length)
+                        for (var i = 0; i < message.runtimeOverrides.length; ++i)
+                            $root.flyteidl.core.RuntimeTaskNodeOverrides.encode(message.runtimeOverrides[i], writer.uint32(/* id 11, wireType 2 =*/90).fork()).ldelim();
                     if (message.qualityOfService != null && message.hasOwnProperty("qualityOfService"))
                         $root.flyteidl.core.QualityOfService.encode(message.qualityOfService, writer.uint32(/* id 16, wireType 2 =*/130).fork()).ldelim();
                     if (message.rawOutputDataConfig != null && message.hasOwnProperty("rawOutputDataConfig"))
@@ -40593,6 +41024,11 @@
                             break;
                         case 10:
                             message.securityContext = $root.flyteidl.core.SecurityContext.decode(reader, reader.uint32());
+                            break;
+                        case 11:
+                            if (!(message.runtimeOverrides && message.runtimeOverrides.length))
+                                message.runtimeOverrides = [];
+                            message.runtimeOverrides.push($root.flyteidl.core.RuntimeTaskNodeOverrides.decode(reader, reader.uint32()));
                             break;
                         case 16:
                             message.qualityOfService = $root.flyteidl.core.QualityOfService.decode(reader, reader.uint32());
@@ -40689,6 +41125,15 @@
                         var error = $root.flyteidl.core.SecurityContext.verify(message.securityContext);
                         if (error)
                             return "securityContext." + error;
+                    }
+                    if (message.runtimeOverrides != null && message.hasOwnProperty("runtimeOverrides")) {
+                        if (!Array.isArray(message.runtimeOverrides))
+                            return "runtimeOverrides: array expected";
+                        for (var i = 0; i < message.runtimeOverrides.length; ++i) {
+                            var error = $root.flyteidl.core.RuntimeTaskNodeOverrides.verify(message.runtimeOverrides[i]);
+                            if (error)
+                                return "runtimeOverrides." + error;
+                        }
                     }
                     if (message.qualityOfService != null && message.hasOwnProperty("qualityOfService")) {
                         var error = $root.flyteidl.core.QualityOfService.verify(message.qualityOfService);

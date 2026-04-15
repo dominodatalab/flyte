@@ -7,6 +7,7 @@ from flyteidl.core import tasks_pb2 as _tasks_pb2
 from flyteidl.core import types_pb2 as _types_pb2
 from flyteidl.core import security_pb2 as _security_pb2
 from google.protobuf import duration_pb2 as _duration_pb2
+from google.protobuf import struct_pb2 as _struct_pb2
 from google.protobuf import wrappers_pb2 as _wrappers_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
@@ -231,16 +232,53 @@ class WorkflowTemplate(_message.Message):
     def __init__(self, id: _Optional[_Union[_identifier_pb2.Identifier, _Mapping]] = ..., metadata: _Optional[_Union[WorkflowMetadata, _Mapping]] = ..., interface: _Optional[_Union[_interface_pb2.TypedInterface, _Mapping]] = ..., nodes: _Optional[_Iterable[_Union[Node, _Mapping]]] = ..., outputs: _Optional[_Iterable[_Union[_literals_pb2.Binding, _Mapping]]] = ..., failure_node: _Optional[_Union[Node, _Mapping]] = ..., metadata_defaults: _Optional[_Union[WorkflowMetadataDefaults, _Mapping]] = ...) -> None: ...
 
 class TaskNodeOverrides(_message.Message):
-    __slots__ = ["resources", "extended_resources", "container_image", "pod_template"]
+    __slots__ = ["resources", "extended_resources", "container_image", "pod_template", "cache", "cache_serialize", "cache_version", "retries", "interruptible", "environment", "task_config"]
+    class EnvironmentEntry(_message.Message):
+        __slots__ = ["key", "value"]
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: str
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
     RESOURCES_FIELD_NUMBER: _ClassVar[int]
     EXTENDED_RESOURCES_FIELD_NUMBER: _ClassVar[int]
     CONTAINER_IMAGE_FIELD_NUMBER: _ClassVar[int]
     POD_TEMPLATE_FIELD_NUMBER: _ClassVar[int]
+    CACHE_FIELD_NUMBER: _ClassVar[int]
+    CACHE_SERIALIZE_FIELD_NUMBER: _ClassVar[int]
+    CACHE_VERSION_FIELD_NUMBER: _ClassVar[int]
+    RETRIES_FIELD_NUMBER: _ClassVar[int]
+    INTERRUPTIBLE_FIELD_NUMBER: _ClassVar[int]
+    ENVIRONMENT_FIELD_NUMBER: _ClassVar[int]
+    TASK_CONFIG_FIELD_NUMBER: _ClassVar[int]
     resources: _tasks_pb2.Resources
     extended_resources: _tasks_pb2.ExtendedResources
     container_image: str
     pod_template: _tasks_pb2.K8sPod
-    def __init__(self, resources: _Optional[_Union[_tasks_pb2.Resources, _Mapping]] = ..., extended_resources: _Optional[_Union[_tasks_pb2.ExtendedResources, _Mapping]] = ..., container_image: _Optional[str] = ..., pod_template: _Optional[_Union[_tasks_pb2.K8sPod, _Mapping]] = ...) -> None: ...
+    cache: bool
+    cache_serialize: bool
+    cache_version: str
+    retries: int
+    interruptible: bool
+    environment: _containers.ScalarMap[str, str]
+    task_config: _struct_pb2.Struct
+    def __init__(self, resources: _Optional[_Union[_tasks_pb2.Resources, _Mapping]] = ..., extended_resources: _Optional[_Union[_tasks_pb2.ExtendedResources, _Mapping]] = ..., container_image: _Optional[str] = ..., pod_template: _Optional[_Union[_tasks_pb2.K8sPod, _Mapping]] = ..., cache: bool = ..., cache_serialize: bool = ..., cache_version: _Optional[str] = ..., retries: _Optional[int] = ..., interruptible: bool = ..., environment: _Optional[_Mapping[str, str]] = ..., task_config: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ...) -> None: ...
+
+class RuntimeTaskNodeOverrides(_message.Message):
+    __slots__ = ["target", "overrides"]
+    TARGET_FIELD_NUMBER: _ClassVar[int]
+    OVERRIDES_FIELD_NUMBER: _ClassVar[int]
+    target: RuntimeTaskNodeOverrideTarget
+    overrides: TaskNodeOverrides
+    def __init__(self, target: _Optional[_Union[RuntimeTaskNodeOverrideTarget, _Mapping]] = ..., overrides: _Optional[_Union[TaskNodeOverrides, _Mapping]] = ...) -> None: ...
+
+class RuntimeTaskNodeOverrideTarget(_message.Message):
+    __slots__ = ["task_type", "task_name"]
+    TASK_TYPE_FIELD_NUMBER: _ClassVar[int]
+    TASK_NAME_FIELD_NUMBER: _ClassVar[int]
+    task_type: str
+    task_name: str
+    def __init__(self, task_type: _Optional[str] = ..., task_name: _Optional[str] = ...) -> None: ...
 
 class LaunchPlanTemplate(_message.Message):
     __slots__ = ["id", "interface", "fixed_inputs"]

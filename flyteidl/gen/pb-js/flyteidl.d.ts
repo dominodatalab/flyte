@@ -5196,6 +5196,27 @@ export namespace flyteidl {
 
             /** TaskNodeOverrides podTemplate */
             podTemplate?: (flyteidl.core.IK8sPod|null);
+
+            /** TaskNodeOverrides cache */
+            cache?: (boolean|null);
+
+            /** TaskNodeOverrides cacheSerialize */
+            cacheSerialize?: (boolean|null);
+
+            /** TaskNodeOverrides cacheVersion */
+            cacheVersion?: (string|null);
+
+            /** TaskNodeOverrides retries */
+            retries?: (number|null);
+
+            /** TaskNodeOverrides interruptible */
+            interruptible?: (boolean|null);
+
+            /** TaskNodeOverrides environment */
+            environment?: ({ [k: string]: string }|null);
+
+            /** TaskNodeOverrides taskConfig */
+            taskConfig?: (google.protobuf.IStruct|null);
         }
 
         /** Represents a TaskNodeOverrides. */
@@ -5218,6 +5239,27 @@ export namespace flyteidl {
 
             /** TaskNodeOverrides podTemplate. */
             public podTemplate?: (flyteidl.core.IK8sPod|null);
+
+            /** TaskNodeOverrides cache. */
+            public cache: boolean;
+
+            /** TaskNodeOverrides cacheSerialize. */
+            public cacheSerialize: boolean;
+
+            /** TaskNodeOverrides cacheVersion. */
+            public cacheVersion: string;
+
+            /** TaskNodeOverrides retries. */
+            public retries: number;
+
+            /** TaskNodeOverrides interruptible. */
+            public interruptible: boolean;
+
+            /** TaskNodeOverrides environment. */
+            public environment: { [k: string]: string };
+
+            /** TaskNodeOverrides taskConfig. */
+            public taskConfig?: (google.protobuf.IStruct|null);
 
             /**
              * Creates a new TaskNodeOverrides instance using the specified properties.
@@ -5246,6 +5288,122 @@ export namespace flyteidl {
 
             /**
              * Verifies a TaskNodeOverrides message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+        }
+
+        /** Properties of a RuntimeTaskNodeOverrides. */
+        interface IRuntimeTaskNodeOverrides {
+
+            /** RuntimeTaskNodeOverrides target */
+            target?: (flyteidl.core.IRuntimeTaskNodeOverrideTarget|null);
+
+            /** RuntimeTaskNodeOverrides overrides */
+            overrides?: (flyteidl.core.ITaskNodeOverrides|null);
+        }
+
+        /** Represents a RuntimeTaskNodeOverrides. */
+        class RuntimeTaskNodeOverrides implements IRuntimeTaskNodeOverrides {
+
+            /**
+             * Constructs a new RuntimeTaskNodeOverrides.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: flyteidl.core.IRuntimeTaskNodeOverrides);
+
+            /** RuntimeTaskNodeOverrides target. */
+            public target?: (flyteidl.core.IRuntimeTaskNodeOverrideTarget|null);
+
+            /** RuntimeTaskNodeOverrides overrides. */
+            public overrides?: (flyteidl.core.ITaskNodeOverrides|null);
+
+            /**
+             * Creates a new RuntimeTaskNodeOverrides instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns RuntimeTaskNodeOverrides instance
+             */
+            public static create(properties?: flyteidl.core.IRuntimeTaskNodeOverrides): flyteidl.core.RuntimeTaskNodeOverrides;
+
+            /**
+             * Encodes the specified RuntimeTaskNodeOverrides message. Does not implicitly {@link flyteidl.core.RuntimeTaskNodeOverrides.verify|verify} messages.
+             * @param message RuntimeTaskNodeOverrides message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: flyteidl.core.IRuntimeTaskNodeOverrides, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a RuntimeTaskNodeOverrides message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns RuntimeTaskNodeOverrides
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): flyteidl.core.RuntimeTaskNodeOverrides;
+
+            /**
+             * Verifies a RuntimeTaskNodeOverrides message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+        }
+
+        /** Properties of a RuntimeTaskNodeOverrideTarget. */
+        interface IRuntimeTaskNodeOverrideTarget {
+
+            /** RuntimeTaskNodeOverrideTarget taskType */
+            taskType?: (string|null);
+
+            /** RuntimeTaskNodeOverrideTarget taskName */
+            taskName?: (string|null);
+        }
+
+        /** Represents a RuntimeTaskNodeOverrideTarget. */
+        class RuntimeTaskNodeOverrideTarget implements IRuntimeTaskNodeOverrideTarget {
+
+            /**
+             * Constructs a new RuntimeTaskNodeOverrideTarget.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: flyteidl.core.IRuntimeTaskNodeOverrideTarget);
+
+            /** RuntimeTaskNodeOverrideTarget taskType. */
+            public taskType: string;
+
+            /** RuntimeTaskNodeOverrideTarget taskName. */
+            public taskName: string;
+
+            /**
+             * Creates a new RuntimeTaskNodeOverrideTarget instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns RuntimeTaskNodeOverrideTarget instance
+             */
+            public static create(properties?: flyteidl.core.IRuntimeTaskNodeOverrideTarget): flyteidl.core.RuntimeTaskNodeOverrideTarget;
+
+            /**
+             * Encodes the specified RuntimeTaskNodeOverrideTarget message. Does not implicitly {@link flyteidl.core.RuntimeTaskNodeOverrideTarget.verify|verify} messages.
+             * @param message RuntimeTaskNodeOverrideTarget message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: flyteidl.core.IRuntimeTaskNodeOverrideTarget, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a RuntimeTaskNodeOverrideTarget message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns RuntimeTaskNodeOverrideTarget
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): flyteidl.core.RuntimeTaskNodeOverrideTarget;
+
+            /**
+             * Verifies a RuntimeTaskNodeOverrideTarget message.
              * @param message Plain object to verify
              * @returns `null` if valid, otherwise the reason why it is not
              */
@@ -14820,6 +14978,9 @@ export namespace flyteidl {
             /** ExecutionSpec securityContext */
             securityContext?: (flyteidl.core.ISecurityContext|null);
 
+            /** ExecutionSpec runtimeOverrides */
+            runtimeOverrides?: (flyteidl.core.IRuntimeTaskNodeOverrides[]|null);
+
             /** ExecutionSpec authRole */
             authRole?: (flyteidl.admin.IAuthRole|null);
 
@@ -14886,6 +15047,9 @@ export namespace flyteidl {
 
             /** ExecutionSpec securityContext. */
             public securityContext?: (flyteidl.core.ISecurityContext|null);
+
+            /** ExecutionSpec runtimeOverrides. */
+            public runtimeOverrides: flyteidl.core.IRuntimeTaskNodeOverrides[];
 
             /** ExecutionSpec authRole. */
             public authRole?: (flyteidl.admin.IAuthRole|null);
@@ -16605,6 +16769,9 @@ export namespace flyteidl {
             /** LaunchPlanSpec securityContext */
             securityContext?: (flyteidl.core.ISecurityContext|null);
 
+            /** LaunchPlanSpec runtimeOverrides */
+            runtimeOverrides?: (flyteidl.core.IRuntimeTaskNodeOverrides[]|null);
+
             /** LaunchPlanSpec qualityOfService */
             qualityOfService?: (flyteidl.core.IQualityOfService|null);
 
@@ -16671,6 +16838,9 @@ export namespace flyteidl {
 
             /** LaunchPlanSpec securityContext. */
             public securityContext?: (flyteidl.core.ISecurityContext|null);
+
+            /** LaunchPlanSpec runtimeOverrides. */
+            public runtimeOverrides: flyteidl.core.IRuntimeTaskNodeOverrides[];
 
             /** LaunchPlanSpec qualityOfService. */
             public qualityOfService?: (flyteidl.core.IQualityOfService|null);

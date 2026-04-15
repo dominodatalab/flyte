@@ -5057,6 +5057,14 @@
           "$ref": "#/definitions/coreSecurityContext",
           "description": "Optional: security context override to apply this execution."
         },
+        "runtime_overrides": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/coreRuntimeTaskNodeOverrides"
+          },
+          "description": "Overrides for specific properties of the task node.\nThese overrides can be used to customize the behavior of the task node at runtime."
+        },
         "auth_role": {
           "$ref": "#/definitions/adminAuthRole",
           "description": "Optional: auth override to apply this execution."
@@ -5364,6 +5372,14 @@
         "security_context": {
           "$ref": "#/definitions/coreSecurityContext",
           "title": "Indicates security context for permissions triggered with this launch plan"
+        },
+        "runtime_overrides": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/coreRuntimeTaskNodeOverrides"
+          },
+          "description": "Overrides for specific properties of the task node.\nThese overrides can be used to customize the behavior of the task node at runtime."
         },
         "quality_of_service": {
           "$ref": "#/definitions/coreQualityOfService",
@@ -8092,6 +8108,32 @@
       },
       "description": "Runtime information. This is loosely defined to allow for extensibility."
     },
+    "coreRuntimeTaskNodeOverrideTarget": {
+      "type": "object",
+      "properties": {
+        "task_type": {
+          "type": "string",
+          "description": "The type of task that this override should be applied to. If not specified, the override will be applied to all task types."
+        },
+        "task_name": {
+          "type": "string",
+          "description": "The name of the task that this override should be applied to. If not specified, the override will be applied to all tasks with the specified task type."
+        }
+      }
+    },
+    "coreRuntimeTaskNodeOverrides": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "$ref": "#/definitions/coreRuntimeTaskNodeOverrideTarget",
+          "description": "Target for the override. This is used to determine which task node(s) the override should be applied to."
+        },
+        "overrides": {
+          "$ref": "#/definitions/coreTaskNodeOverrides",
+          "description": "The override values to apply at runtime."
+        }
+      }
+    },
     "coreScalar": {
       "type": "object",
       "properties": {
@@ -8508,6 +8550,38 @@
         "pod_template": {
           "$ref": "#/definitions/coreK8sPod",
           "title": "Override for the pod template used by task pods\n+optional"
+        },
+        "cache": {
+          "type": "boolean",
+          "title": "Boolean that indicates if caching should be enabled"
+        },
+        "cache_serialize": {
+          "type": "boolean",
+          "description": "Boolean that indicates if identical (ie. same inputs) instances of this task should be\nexecuted in serial when caching is enabled."
+        },
+        "cache_version": {
+          "type": "string",
+          "title": "Cache version to use"
+        },
+        "retries": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Number of times to retry this task during a workflow execution"
+        },
+        "interruptible": {
+          "type": "boolean",
+          "title": "Boolean that indicates that this task can be interrupted and/or scheduled on nodes with lower QoS guarantees"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Environment variables that should be added for this tasks execution"
+        },
+        "task_config": {
+          "type": "object",
+          "description": "This argument provides configuration for a specific task types."
         }
       },
       "description": "Optional task node overrides that will be applied at task execution time."

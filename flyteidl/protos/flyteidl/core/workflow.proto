@@ -13,6 +13,7 @@ import "flyteidl/core/tasks.proto";
 import "flyteidl/core/types.proto";
 import "flyteidl/core/security.proto";
 import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
 import "google/protobuf/wrappers.proto";
 
 // Defines a condition and the execution unit that should be executed if the condition is satisfied.
@@ -352,7 +353,46 @@ message TaskNodeOverrides {
     // Override for the pod template used by task pods
     //+optional
     K8sPod pod_template = 4;
+
+    // Boolean that indicates if caching should be enabled
+    bool cache = 5;
+
+    // Boolean that indicates if identical (ie. same inputs) instances of this task should be
+    // executed in serial when caching is enabled.
+    bool cache_serialize = 6;
+
+    // Cache version to use
+    string cache_version = 7;
+
+    //  Number of times to retry this task during a workflow execution
+    int32 retries = 8;
+
+    // Boolean that indicates that this task can be interrupted and/or scheduled on nodes with lower QoS guarantees
+    bool interruptible = 9;
+
+    // Environment variables that should be added for this tasks execution
+    map<string, string> environment = 10;
+
+    // This argument provides configuration for a specific task types.
+    google.protobuf.Struct task_config = 11;
 }
+
+message RuntimeTaskNodeOverrides {
+    // Target for the override. This is used to determine which task node(s) the override should be applied to.
+    RuntimeTaskNodeOverrideTarget target = 1;
+
+    // The override values to apply at runtime.
+    TaskNodeOverrides overrides = 2;
+}
+
+message RuntimeTaskNodeOverrideTarget {
+    // The type of task that this override should be applied to. If not specified, the override will be applied to all task types.
+    string task_type = 1;
+
+    // The name of the task that this override should be applied to. If not specified, the override will be applied to all tasks with the specified task type.
+    string task_name = 2;
+}
+
 
 // A structure that uniquely identifies a launch plan in the system.
 message LaunchPlanTemplate {

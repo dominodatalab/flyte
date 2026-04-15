@@ -10,6 +10,7 @@ import { ParameterMap, VariableMap } from "../core/interface_pb.js";
 import { LiteralMap } from "../core/literals_pb.js";
 import { Annotations, AuthRole, Envs, Labels, NamedEntityIdentifier, Notification, RawOutputDataConfig, Sort } from "./common_pb.js";
 import { SecurityContext } from "../core/security_pb.js";
+import { RuntimeTaskNodeOverrides } from "../core/workflow_pb.js";
 import { QualityOfService } from "../core/execution_pb.js";
 import { ExecutionEnvAssignment } from "../core/execution_envs_pb.js";
 import { ClusterAssignment } from "./cluster_assignment_pb.js";
@@ -388,6 +389,14 @@ export class LaunchPlanSpec extends Message<LaunchPlanSpec> {
   securityContext?: SecurityContext;
 
   /**
+   * Overrides for specific properties of the task node.
+   * These overrides can be used to customize the behavior of the task node at runtime.
+   *
+   * @generated from field: repeated flyteidl.core.RuntimeTaskNodeOverrides runtime_overrides = 11;
+   */
+  runtimeOverrides: RuntimeTaskNodeOverrides[] = [];
+
+  /**
    * Indicates the runtime priority of the execution.
    *
    * @generated from field: flyteidl.core.QualityOfService quality_of_service = 16;
@@ -476,6 +485,7 @@ export class LaunchPlanSpec extends Message<LaunchPlanSpec> {
     { no: 8, name: "auth", kind: "message", T: Auth },
     { no: 9, name: "auth_role", kind: "message", T: AuthRole },
     { no: 10, name: "security_context", kind: "message", T: SecurityContext },
+    { no: 11, name: "runtime_overrides", kind: "message", T: RuntimeTaskNodeOverrides, repeated: true },
     { no: 16, name: "quality_of_service", kind: "message", T: QualityOfService },
     { no: 17, name: "raw_output_data_config", kind: "message", T: RawOutputDataConfig },
     { no: 18, name: "max_parallelism", kind: "scalar", T: 5 /* ScalarType.INT32 */ },

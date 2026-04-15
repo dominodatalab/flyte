@@ -11,6 +11,7 @@ import { ExecutionError, QualityOfService, WorkflowExecution_Phase } from "../co
 import { Annotations, AuthRole, Envs, Labels, Notification, RawOutputDataConfig, UrlBlob } from "./common_pb.js";
 import { ArtifactID } from "../core/artifact_id_pb.js";
 import { SecurityContext } from "../core/security_pb.js";
+import { RuntimeTaskNodeOverrides } from "../core/workflow_pb.js";
 import { ClusterAssignment } from "./cluster_assignment_pb.js";
 import { ExecutionClusterLabel } from "./matchable_resource_pb.js";
 import { ExecutionEnvAssignment } from "../core/execution_envs_pb.js";
@@ -1046,6 +1047,14 @@ export class ExecutionSpec extends Message<ExecutionSpec> {
   securityContext?: SecurityContext;
 
   /**
+   * Overrides for specific properties of the task node.
+   * These overrides can be used to customize the behavior of the task node at runtime.
+   *
+   * @generated from field: repeated flyteidl.core.RuntimeTaskNodeOverrides runtime_overrides = 11;
+   */
+  runtimeOverrides: RuntimeTaskNodeOverrides[] = [];
+
+  /**
    * Optional: auth override to apply this execution.
    *
    * @generated from field: flyteidl.admin.AuthRole auth_role = 16 [deprecated = true];
@@ -1148,6 +1157,7 @@ export class ExecutionSpec extends Message<ExecutionSpec> {
     { no: 7, name: "labels", kind: "message", T: Labels },
     { no: 8, name: "annotations", kind: "message", T: Annotations },
     { no: 10, name: "security_context", kind: "message", T: SecurityContext },
+    { no: 11, name: "runtime_overrides", kind: "message", T: RuntimeTaskNodeOverrides, repeated: true },
     { no: 16, name: "auth_role", kind: "message", T: AuthRole },
     { no: 17, name: "quality_of_service", kind: "message", T: QualityOfService },
     { no: 18, name: "max_parallelism", kind: "scalar", T: 5 /* ScalarType.INT32 */ },

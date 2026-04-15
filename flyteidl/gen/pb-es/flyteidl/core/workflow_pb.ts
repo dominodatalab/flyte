@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { BoolValue, Duration, Message, proto3 } from "@bufbuild/protobuf";
+import { BoolValue, Duration, Message, proto3, Struct } from "@bufbuild/protobuf";
 import { BooleanExpression } from "./condition_pb.js";
 import { Error, LiteralType } from "./types_pb.js";
 import { Identifier } from "./identifier_pb.js";
@@ -1249,6 +1249,56 @@ export class TaskNodeOverrides extends Message<TaskNodeOverrides> {
    */
   podTemplate?: K8sPod;
 
+  /**
+   * Boolean that indicates if caching should be enabled
+   *
+   * @generated from field: bool cache = 5;
+   */
+  cache = false;
+
+  /**
+   * Boolean that indicates if identical (ie. same inputs) instances of this task should be
+   * executed in serial when caching is enabled.
+   *
+   * @generated from field: bool cache_serialize = 6;
+   */
+  cacheSerialize = false;
+
+  /**
+   * Cache version to use
+   *
+   * @generated from field: string cache_version = 7;
+   */
+  cacheVersion = "";
+
+  /**
+   *  Number of times to retry this task during a workflow execution
+   *
+   * @generated from field: int32 retries = 8;
+   */
+  retries = 0;
+
+  /**
+   * Boolean that indicates that this task can be interrupted and/or scheduled on nodes with lower QoS guarantees
+   *
+   * @generated from field: bool interruptible = 9;
+   */
+  interruptible = false;
+
+  /**
+   * Environment variables that should be added for this tasks execution
+   *
+   * @generated from field: map<string, string> environment = 10;
+   */
+  environment: { [key: string]: string } = {};
+
+  /**
+   * This argument provides configuration for a specific task types.
+   *
+   * @generated from field: google.protobuf.Struct task_config = 11;
+   */
+  taskConfig?: Struct;
+
   constructor(data?: PartialMessage<TaskNodeOverrides>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1261,6 +1311,13 @@ export class TaskNodeOverrides extends Message<TaskNodeOverrides> {
     { no: 2, name: "extended_resources", kind: "message", T: ExtendedResources },
     { no: 3, name: "container_image", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "pod_template", kind: "message", T: K8sPod },
+    { no: 5, name: "cache", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 6, name: "cache_serialize", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 7, name: "cache_version", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "retries", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 9, name: "interruptible", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 10, name: "environment", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
+    { no: 11, name: "task_config", kind: "message", T: Struct },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TaskNodeOverrides {
@@ -1277,6 +1334,100 @@ export class TaskNodeOverrides extends Message<TaskNodeOverrides> {
 
   static equals(a: TaskNodeOverrides | PlainMessage<TaskNodeOverrides> | undefined, b: TaskNodeOverrides | PlainMessage<TaskNodeOverrides> | undefined): boolean {
     return proto3.util.equals(TaskNodeOverrides, a, b);
+  }
+}
+
+/**
+ * @generated from message flyteidl.core.RuntimeTaskNodeOverrides
+ */
+export class RuntimeTaskNodeOverrides extends Message<RuntimeTaskNodeOverrides> {
+  /**
+   * Target for the override. This is used to determine which task node(s) the override should be applied to.
+   *
+   * @generated from field: flyteidl.core.RuntimeTaskNodeOverrideTarget target = 1;
+   */
+  target?: RuntimeTaskNodeOverrideTarget;
+
+  /**
+   * The override values to apply at runtime.
+   *
+   * @generated from field: flyteidl.core.TaskNodeOverrides overrides = 2;
+   */
+  overrides?: TaskNodeOverrides;
+
+  constructor(data?: PartialMessage<RuntimeTaskNodeOverrides>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "flyteidl.core.RuntimeTaskNodeOverrides";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "target", kind: "message", T: RuntimeTaskNodeOverrideTarget },
+    { no: 2, name: "overrides", kind: "message", T: TaskNodeOverrides },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RuntimeTaskNodeOverrides {
+    return new RuntimeTaskNodeOverrides().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RuntimeTaskNodeOverrides {
+    return new RuntimeTaskNodeOverrides().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RuntimeTaskNodeOverrides {
+    return new RuntimeTaskNodeOverrides().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RuntimeTaskNodeOverrides | PlainMessage<RuntimeTaskNodeOverrides> | undefined, b: RuntimeTaskNodeOverrides | PlainMessage<RuntimeTaskNodeOverrides> | undefined): boolean {
+    return proto3.util.equals(RuntimeTaskNodeOverrides, a, b);
+  }
+}
+
+/**
+ * @generated from message flyteidl.core.RuntimeTaskNodeOverrideTarget
+ */
+export class RuntimeTaskNodeOverrideTarget extends Message<RuntimeTaskNodeOverrideTarget> {
+  /**
+   * The type of task that this override should be applied to. If not specified, the override will be applied to all task types.
+   *
+   * @generated from field: string task_type = 1;
+   */
+  taskType = "";
+
+  /**
+   * The name of the task that this override should be applied to. If not specified, the override will be applied to all tasks with the specified task type.
+   *
+   * @generated from field: string task_name = 2;
+   */
+  taskName = "";
+
+  constructor(data?: PartialMessage<RuntimeTaskNodeOverrideTarget>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "flyteidl.core.RuntimeTaskNodeOverrideTarget";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "task_type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "task_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RuntimeTaskNodeOverrideTarget {
+    return new RuntimeTaskNodeOverrideTarget().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RuntimeTaskNodeOverrideTarget {
+    return new RuntimeTaskNodeOverrideTarget().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RuntimeTaskNodeOverrideTarget {
+    return new RuntimeTaskNodeOverrideTarget().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RuntimeTaskNodeOverrideTarget | PlainMessage<RuntimeTaskNodeOverrideTarget> | undefined, b: RuntimeTaskNodeOverrideTarget | PlainMessage<RuntimeTaskNodeOverrideTarget> | undefined): boolean {
+    return proto3.util.equals(RuntimeTaskNodeOverrideTarget, a, b);
   }
 }
 

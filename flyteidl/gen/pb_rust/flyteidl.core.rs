@@ -2885,6 +2885,48 @@ pub struct TaskNodeOverrides {
     /// +optional
     #[prost(message, optional, tag="4")]
     pub pod_template: ::core::option::Option<K8sPod>,
+    /// Boolean that indicates if caching should be enabled
+    #[prost(bool, tag="5")]
+    pub cache: bool,
+    /// Boolean that indicates if identical (ie. same inputs) instances of this task should be
+    /// executed in serial when caching is enabled.
+    #[prost(bool, tag="6")]
+    pub cache_serialize: bool,
+    /// Cache version to use
+    #[prost(string, tag="7")]
+    pub cache_version: ::prost::alloc::string::String,
+    ///   Number of times to retry this task during a workflow execution
+    #[prost(int32, tag="8")]
+    pub retries: i32,
+    /// Boolean that indicates that this task can be interrupted and/or scheduled on nodes with lower QoS guarantees
+    #[prost(bool, tag="9")]
+    pub interruptible: bool,
+    /// Environment variables that should be added for this tasks execution
+    #[prost(map="string, string", tag="10")]
+    pub environment: ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// This argument provides configuration for a specific task types.
+    #[prost(message, optional, tag="11")]
+    pub task_config: ::core::option::Option<::prost_types::Struct>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RuntimeTaskNodeOverrides {
+    /// Target for the override. This is used to determine which task node(s) the override should be applied to.
+    #[prost(message, optional, tag="1")]
+    pub target: ::core::option::Option<RuntimeTaskNodeOverrideTarget>,
+    /// The override values to apply at runtime.
+    #[prost(message, optional, tag="2")]
+    pub overrides: ::core::option::Option<TaskNodeOverrides>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RuntimeTaskNodeOverrideTarget {
+    /// The type of task that this override should be applied to. If not specified, the override will be applied to all task types.
+    #[prost(string, tag="1")]
+    pub task_type: ::prost::alloc::string::String,
+    /// The name of the task that this override should be applied to. If not specified, the override will be applied to all tasks with the specified task type.
+    #[prost(string, tag="2")]
+    pub task_name: ::prost::alloc::string::String,
 }
 /// A structure that uniquely identifies a launch plan in the system.
 #[allow(clippy::derive_partial_eq_without_eq)]

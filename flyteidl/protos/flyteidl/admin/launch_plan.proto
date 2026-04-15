@@ -9,6 +9,7 @@ import "flyteidl/core/literals.proto";
 import "flyteidl/core/identifier.proto";
 import "flyteidl/core/interface.proto";
 import "flyteidl/core/security.proto";
+import "flyteidl/core/workflow.proto";
 import "flyteidl/admin/schedule.proto";
 import "flyteidl/admin/cluster_assignment.proto";
 import "flyteidl/admin/common.proto";
@@ -112,6 +113,10 @@ message LaunchPlanSpec {
 
     // Indicates security context for permissions triggered with this launch plan
     core.SecurityContext security_context = 10;
+
+    // Overrides for specific properties of the task node.
+    // These overrides can be used to customize the behavior of the task node at runtime.
+    repeated core.RuntimeTaskNodeOverrides runtime_overrides = 11;
 
     // Indicates the runtime priority of the execution.
     core.QualityOfService quality_of_service = 16;

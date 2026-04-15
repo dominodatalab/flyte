@@ -1754,6 +1754,10 @@ pub struct ExecutionSpec {
     /// Optional: security context override to apply this execution.
     #[prost(message, optional, tag="10")]
     pub security_context: ::core::option::Option<super::core::SecurityContext>,
+    /// Overrides for specific properties of the task node.
+    /// These overrides can be used to customize the behavior of the task node at runtime.
+    #[prost(message, repeated, tag="11")]
+    pub runtime_overrides: ::prost::alloc::vec::Vec<super::core::RuntimeTaskNodeOverrides>,
     /// Optional: auth override to apply this execution.
     #[deprecated]
     #[prost(message, optional, tag="16")]
@@ -2117,6 +2121,10 @@ pub struct LaunchPlanSpec {
     /// Indicates security context for permissions triggered with this launch plan
     #[prost(message, optional, tag="10")]
     pub security_context: ::core::option::Option<super::core::SecurityContext>,
+    /// Overrides for specific properties of the task node.
+    /// These overrides can be used to customize the behavior of the task node at runtime.
+    #[prost(message, repeated, tag="11")]
+    pub runtime_overrides: ::prost::alloc::vec::Vec<super::core::RuntimeTaskNodeOverrides>,
     /// Indicates the runtime priority of the execution.
     #[prost(message, optional, tag="16")]
     pub quality_of_service: ::core::option::Option<super::core::QualityOfService>,
