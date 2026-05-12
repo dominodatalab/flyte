@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -88,4 +89,21 @@ func DownloadFileFromHTTP(ctx context.Context, ref storage.DataReference) (io.Re
 		return nil, errors.Wrapf(err, "Failed to download from url :%s", ref)
 	}
 	return resp.Body, nil
+}
+
+func ValidatePath(path string, allowedDirectories []string) error {
+	for _, dir := range allowedDirectories {
+		if strings.HasPrefix(path, dir) {
+			relativePath, err := filepath.Rel(dir, path)
+			if err != nil {
+				return errors.Wrapf(err, "the provided path is not relative to the expected base [%s], path: %s", dir, path)
+			}
+			_, err = os.OpenInRoot(dir, relativePath)
+			if err != nil {
+				return errors.Wrapf(err, "the provided path references a location outside of the root [%s], path: %s", dir, path)
+			}
+			return nil
+		}
+	}
+	return errors.Errorf("the provided path does not start with an allowed prefix, path: %s", path)
 }

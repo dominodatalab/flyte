@@ -3,6 +3,7 @@ package data
 import (
 	"bytes"
 	"context"
+	"errors"
 	"os"
 	"path"
 	"testing"
@@ -111,6 +112,46 @@ func TestDownloadFromStorage(t *testing.T) {
 	if assert.NoError(t, err) {
 		assert.NotNil(t, f)
 		f.Close()
+	}
+}
+
+func TestValidatePath(t *testing.T) {
+	tmpFolderLocation := ""
+	tmpPrefix := "util_test"
+
+	tmpDir, err := os.MkdirTemp(tmpFolderLocation, tmpPrefix)
+	assert.NoError(t, err)
+	defer func() {
+		assert.NoError(t, os.RemoveAll(tmpDir))
+	}()
+
+	data := []byte("data")
+	assert.NoError(t, os.WriteFile(tmpDir+"/events.csv", data, os.ModePerm))
+
+	for name, tt := range map[string]struct {
+		path        string
+		expectedErr error
+	}{
+		"Valid simple file path": {
+			path: tmpDir + "/events.csv",
+		},
+		"Invalid protected path": {
+			path:        "/etc/shadow",
+			expectedErr: errors.New("the provided path does not start with an allowed prefix"),
+		},
+		"Invalid protected path with allowed prefix": {
+			path:        tmpDir + "/../../etc/shadow",
+			expectedErr: errors.New("the provided path references a location outside of the root"),
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			err := ValidatePath(tt.path, []string{tmpDir})
+			if tt.expectedErr != nil {
+				assert.ErrorContains(t, err, tt.expectedErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
 	}
 }
 
