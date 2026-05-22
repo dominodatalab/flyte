@@ -113,6 +113,9 @@ func (u Uploader) handleBlobType(ctx context.Context, localPath string, toPath s
 	return coreutils.MakeLiteralForBlob(toPath, false, ""), UploadFileToStorage(ctx, fpath, toPath, size, u.store)
 }
 
+// uploadConfigs must contain an entry for every output variable
+// HydrateInputOutputConfigs can be used to hydrate uploadConfigs with default
+// entries for variables that are missing entries
 func (u Uploader) RecursiveUpload(ctx context.Context, vars *core.VariableMap, uploadConfigs map[string]FileIOConfig, errorFilePath string, metaOutputPath, dataRawPath storage.DataReference) error {
 	childCtx, cancel := context.WithCancel(ctx)
 	defer cancel()

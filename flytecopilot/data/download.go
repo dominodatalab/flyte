@@ -476,6 +476,9 @@ type downloadedResult struct {
 	v   interface{}
 }
 
+// downloadConfigs must contain an entry for every input variable
+// HydrateInputOutputConfigs can be used to hydrate downloadConfigs with default
+// entries for variables that are missing entries
 func (d Downloader) RecursiveDownload(ctx context.Context, inputs *core.LiteralMap, downloadConfigs map[string]FileIOConfig, writePrimitiveToFile bool) (VarMap, *core.LiteralMap, error) {
 	childCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
