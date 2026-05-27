@@ -135,7 +135,7 @@ func (u *UploadOptions) uploader(ctx context.Context) error {
 	var uploadConfigs map[string]data.FileIOConfig
 	if u.uploadConfigFilePath != "" {
 		var err error
-		uploadConfigs, err = data.LoadFileIOConfigs(u.uploadConfigFilePath, u.uploadConfigDir)
+		uploadConfigs, err = data.LoadFileIOConfigs(u.uploadConfigFilePath, u.uploadConfigDir, data.AllowedDirectories)
 		if err != nil {
 			return fmt.Errorf("failed to load upload configs: %w", err)
 		}

@@ -23,7 +23,7 @@ const (
 	AllowedDirectoryLegacyDatasetsMount   = "/domino"
 )
 
-var allowedDirectories = []string{
+var AllowedDirectories = []string{
 	AllowedDirectoryGBPDatasetsMount,
 	AllowedDirectoryGBPNetAppVolumesMount,
 	AllowedDirectoryWorkflowInputsMount,
@@ -49,7 +49,7 @@ func loadFileIOConfigsFromPath(path string) ([]FileIOConfig, error) {
 //  1. Unmarhsalling the configs from the config file path
 //  2. Validating each path starts with an allowed prefix
 //  3. Relativizing each path with the config directory
-func LoadFileIOConfigs(fileIOConfigFilePath string, fileIOConfigDir string) (map[string]FileIOConfig, error) {
+func LoadFileIOConfigs(fileIOConfigFilePath string, fileIOConfigDir string, allowedDirectories []string) (map[string]FileIOConfig, error) {
 	configsList, err := loadFileIOConfigsFromPath(fileIOConfigFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load file config file %q: %w", fileIOConfigFilePath, err)

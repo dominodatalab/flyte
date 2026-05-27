@@ -83,7 +83,7 @@ func (d *DownloadOptions) Download(ctx context.Context) error {
 		var downloadConfigs map[string]data.FileIOConfig
 		if d.downloadConfigFilePath != "" {
 			var err error
-			downloadConfigs, err = data.LoadFileIOConfigs(d.downloadConfigFilePath, d.downloadConfigDir)
+			downloadConfigs, err = data.LoadFileIOConfigs(d.downloadConfigFilePath, d.downloadConfigDir, data.AllowedDirectories)
 			if err != nil {
 				return fmt.Errorf("failed to load download configs: %w", err)
 			}

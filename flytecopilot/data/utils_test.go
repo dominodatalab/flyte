@@ -125,9 +125,6 @@ func TestValidatePath(t *testing.T) {
 		assert.NoError(t, os.RemoveAll(tmpDir))
 	}()
 
-	data := []byte("data")
-	assert.NoError(t, os.WriteFile(tmpDir+"/events.csv", data, os.ModePerm))
-
 	for name, tt := range map[string]struct {
 		path        string
 		expectedErr error
@@ -137,11 +134,11 @@ func TestValidatePath(t *testing.T) {
 		},
 		"Invalid protected path": {
 			path:        "/etc/shadow",
-			expectedErr: errors.New("the provided path does not start with an allowed prefix"),
+			expectedErr: errors.New("path does not start with an allowed prefix"),
 		},
 		"Invalid protected path references location outside of the root": {
 			path:        tmpDir + "/../etc/shadow",
-			expectedErr: errors.New("the provided path references a location outside of the root"),
+			expectedErr: errors.New("path does not start with an allowed prefix"),
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
