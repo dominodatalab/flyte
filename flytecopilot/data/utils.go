@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -88,4 +89,17 @@ func DownloadFileFromHTTP(ctx context.Context, ref storage.DataReference) (io.Re
 		return nil, errors.Wrapf(err, "Failed to download from url :%s", ref)
 	}
 	return resp.Body, nil
+}
+
+func ValidatePath(path string, allowedDirectories []string) error {
+	cleanPath := filepath.Clean(path)
+	for _, dir := range allowedDirectories {
+		cleanDir := filepath.Clean(dir)
+		rel, err := filepath.Rel(cleanDir, cleanPath)
+		if err != nil || strings.HasPrefix(rel, "..") {
+			continue
+		}
+		return nil
+	}
+	return errors.Errorf("path does not start with an allowed prefix, path: %s", cleanPath)
 }

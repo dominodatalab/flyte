@@ -46,7 +46,7 @@ func TestLoadFileIOConfigs(t *testing.T) {
 	expectedReportPath := path.Join(tmpExecutionVolDir, "report.pdf")
 	expectedReportVariableName := "report"
 
-	configs, err := LoadFileIOConfigs(fileIOConfigFilePath, fileIOConfigDir)
+	configs, err := LoadFileIOConfigs(fileIOConfigFilePath, fileIOConfigDir, []string{"."})
 	assert.NoError(t, err)
 	assert.Len(t, configs, 2)
 	assert.Equal(t, expectedDataPath, configs["data"].Path)
