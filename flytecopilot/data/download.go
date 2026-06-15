@@ -30,7 +30,26 @@ type Downloader struct {
 	format core.DataLoadingConfig_LiteralMapFormat
 	store  *storage.DataStore
 	// TODO support download mode
-	mode core.IOStrategy_DownloadMode
+	mode       core.IOStrategy_DownloadMode
+	isGitBased bool
+}
+
+// createFileWriter creates parent directories and opens path for writing.
+func createFileWriter(path string) (*os.File, error) {
+	dir := filepath.Dir(path)
+	// os.MkdirAll creates the specified directory structure if it doesn’t already exist
+	// 0777: the directory can be read and written by anyone
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return nil, errors.Wrapf(err, "failed to make dir at path %s", dir)
+	}
+	if err := os.Chmod(dir, 0777); err != nil {
+		return nil, errors.Wrapf(err, "failed to chmod directory at path %s", dir)
+	}
+	writer, err := os.Create(path)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to open file at path %s", path)
+	}
+	return writer, nil
 }
 
 // TODO add timeout and rate limit
@@ -177,21 +196,12 @@ func (d Downloader) handleBlob(ctx context.Context, blob *core.Blob, toPath stri
 				logger.Debugf(ctx, "Extracting file from %s, using relative path %s", absPath, relativePath)
 
 				newPath := filepath.Join(toPath, relativePath)
-				dir := filepath.Dir(newPath)
 
 				mu.Lock()
-				// os.MkdirAll creates the specified directory structure if it doesn’t already exist
-				// 0777: the directory can be read and written by anyone
-				err = os.MkdirAll(dir, 0777)
+				writer, err := createFileWriter(newPath)
 				mu.Unlock()
 				if err != nil {
-					logger.Errorf(ctx, "failed to make dir at path [%s]", dir)
-					return
-				}
-
-				writer, err := os.Create(newPath)
-				if err != nil {
-					logger.Errorf(ctx, "failed to open file at path [%s]", newPath)
+					logger.Errorf(ctx, "failed to create file at path [%s]: %v", newPath, err)
 					return
 				}
 				defer func() {
@@ -246,9 +256,9 @@ func (d Downloader) handleBlob(ctx context.Context, blob *core.Blob, toPath stri
 			}
 		}()
 
-		writer, err := os.Create(toPath)
+		writer, err := createFileWriter(toPath)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to open file at path %s", toPath)
+			return nil, err
 		}
 		defer func() {
 			err := writer.Close()
@@ -291,9 +301,9 @@ func (d Downloader) handleError(_ context.Context, b *core.Error, toFilePath str
 func (d Downloader) handleGeneric(ctx context.Context, b *structpb.Struct, toFilePath string, writeToFile bool) (interface{}, error) {
 	if writeToFile && b != nil {
 		m := jsonpb.Marshaler{}
-		writer, err := os.Create(toFilePath)
+		writer, err := createFileWriter(toFilePath)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to open file at path %s", toFilePath)
+			return nil, err
 		}
 		defer func() {
 			err := writer.Close()
@@ -538,10 +548,16 @@ func (d Downloader) RecursiveDownload(ctx context.Context, inputs *core.LiteralM
 func (d Downloader) DownloadInputs(ctx context.Context, inputRef storage.DataReference, outputDir string, downloadConfigs map[string]FileIOConfig) error {
 	logger.Infof(ctx, "Downloading inputs from [%s]", inputRef)
 	defer logger.Infof(ctx, "Exited downloading inputs from [%s]", inputRef)
+	// downloader prep
+	isGitBased := os.Getenv("DOMINO_IS_GIT_BASED") == "true"
+	if err := prepareDataDirectories(ctx, isGitBased); err != nil {
+		return errors.Wrapf(err, "failed to prepare data directories")
+	}
 	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
 		logger.Errorf(ctx, "Failed to create output directories, err: %s", err)
 		return err
 	}
+	// begin downloads
 	inputs := &core.LiteralMap{}
 	err := d.store.ReadProtobuf(ctx, inputRef, inputs)
 	if err != nil {
@@ -581,10 +597,44 @@ func (d Downloader) DownloadInputs(ctx context.Context, inputRef storage.DataRef
 	return nil
 }
 
-func NewDownloader(_ context.Context, store *storage.DataStore, format core.DataLoadingConfig_LiteralMapFormat, mode core.IOStrategy_DownloadMode) Downloader {
+func prepareDataDirectories(ctx context.Context, isGitBased bool) error {
+	directoriesToRemove := AllowedDirectories
+	var directoriesToCreate []string
+	if isGitBased {
+		directoriesToCreate = AllowedDirectoriesGBP
+	} else {
+		directoriesToCreate = AllowedDirectoriesLegacy
+	}
+	for _, path := range directoriesToRemove {
+		dir := filepath.Join("/execution-vol", path)
+		if _, err := os.Stat(dir); err == nil {
+			logger.Infof(ctx, "Removing temporary data directory: %s", dir)
+			if err := os.RemoveAll(dir); err != nil {
+				return errors.Wrapf(err, "failed to remove temporary data directory: %s", dir)
+			}
+		} else {
+			logger.Infof(ctx, "Temporary data directory does not exist: %s", dir)
+		}
+	}
+
+	for _, path := range directoriesToCreate {
+		dir := filepath.Join("/execution-vol", path)
+		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+			return errors.Wrapf(err, "failed to create temporary data directory: %s", dir)
+		}
+		if err := os.Chmod(dir, os.ModePerm); err != nil {
+			return errors.Wrapf(err, "failed to chmod temporary data directory: %s", dir)
+		}
+		logger.Infof(ctx, "Temporary data directory created: %s", dir)
+	}
+	return nil
+}
+
+func NewDownloader(_ context.Context, store *storage.DataStore, format core.DataLoadingConfig_LiteralMapFormat, mode core.IOStrategy_DownloadMode, isGitBased bool) Downloader {
 	return Downloader{
-		format: format,
-		store:  store,
-		mode:   mode,
+		format:     format,
+		store:      store,
+		mode:       mode,
+		isGitBased: isGitBased,
 	}
 }

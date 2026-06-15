@@ -3,6 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -92,14 +94,20 @@ func (d *DownloadOptions) Download(ctx context.Context) error {
 		}
 		data.HydrateInputOutputConfigs(downloadConfigs, variableMap, d.localDirectoryPath)
 
-		dl := data.NewDownloader(ctx, d.Store, core.DataLoadingConfig_LiteralMapFormat(f), core.IOStrategy_DownloadMode(m))
+		// The DOMINO_IS_GIT_BASED env var always wins; there is no corresponding CLI flag.
+		isGitBased, err := strconv.ParseBool(os.Getenv("DOMINO_IS_GIT_BASED"))
+		if err != nil {
+			isGitBased = false
+		}
+
+		dl := data.NewDownloader(ctx, d.Store, core.DataLoadingConfig_LiteralMapFormat(f), core.IOStrategy_DownloadMode(m), isGitBased)
 		childCtx := ctx
 		cancelFn := func() {}
 		if d.timeout > 0 {
 			childCtx, cancelFn = context.WithTimeout(ctx, d.timeout)
 		}
 		defer cancelFn()
-		err := dl.DownloadInputs(childCtx, storage.DataReference(d.remoteInputsPath), d.localDirectoryPath, downloadConfigs)
+		err = dl.DownloadInputs(childCtx, storage.DataReference(d.remoteInputsPath), d.localDirectoryPath, downloadConfigs)
 		if err != nil {
 			logger.Errorf(ctx, "Downloading failed, err %s", err)
 			return err
