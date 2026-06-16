@@ -90,6 +90,7 @@ func NewDataCommand() *cobra.Command {
 
 	command.AddCommand(NewDownloadCommand(rootOpts))
 	command.AddCommand(NewUploadCommand(rootOpts))
+	command.AddCommand(NewPrepareCommand(rootOpts))
 
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	loadingRules.DefaultClientConfig = &clientcmd.DefaultClientConfig

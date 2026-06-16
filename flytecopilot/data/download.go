@@ -30,9 +30,7 @@ type Downloader struct {
 	format core.DataLoadingConfig_LiteralMapFormat
 	store  *storage.DataStore
 	// TODO support download mode
-	mode                core.IOStrategy_DownloadMode
-	isGitBased          bool
-	executionVolumePath string
+	mode core.IOStrategy_DownloadMode
 }
 
 // createFileWriter creates parent directories and opens path for writing.
@@ -547,15 +545,10 @@ func (d Downloader) RecursiveDownload(ctx context.Context, inputs *core.LiteralM
 func (d Downloader) DownloadInputs(ctx context.Context, inputRef storage.DataReference, outputDir string, downloadConfigs map[string]FileIOConfig) error {
 	logger.Infof(ctx, "Downloading inputs from [%s]", inputRef)
 	defer logger.Infof(ctx, "Exited downloading inputs from [%s]", inputRef)
-	// downloader prep
-	if err := d.PrepareDataDirectories(ctx); err != nil {
-		return errors.Wrapf(err, "failed to prepare data directories")
-	}
 	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
 		logger.Errorf(ctx, "Failed to create output directories, err: %s", err)
 		return err
 	}
-	// begin downloads
 	inputs := &core.LiteralMap{}
 	err := d.store.ReadProtobuf(ctx, inputRef, inputs)
 	if err != nil {
@@ -595,47 +588,10 @@ func (d Downloader) DownloadInputs(ctx context.Context, inputRef storage.DataRef
 	return nil
 }
 
-func (d Downloader) PrepareDataDirectories(ctx context.Context) error {
-	directoriesToRemove := AllowedDirectories
-	var directoriesToCreate []string
-	if d.isGitBased {
-		directoriesToCreate = AllowedDirectoriesGBP
-	} else {
-		directoriesToCreate = AllowedDirectoriesLegacy
-	}
-	for _, path := range directoriesToRemove {
-		dir := filepath.Join(d.executionVolumePath, path)
-		if _, err := os.Stat(dir); os.IsNotExist(err) {
-			logger.Infof(ctx, "Temporary data directory does not exist: %s", dir)
-		} else if err != nil {
-			return errors.Wrapf(err, "failed to stat temporary data directory: %s", dir)
-		} else {
-			logger.Infof(ctx, "Removing temporary data directory: %s", dir)
-			if err := os.RemoveAll(dir); err != nil {
-				return errors.Wrapf(err, "failed to remove temporary data directory: %s", dir)
-			}
-		}
-	}
-
-	for _, path := range directoriesToCreate {
-		dir := filepath.Join(d.executionVolumePath, path)
-		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-			return errors.Wrapf(err, "failed to create temporary data directory: %s", dir)
-		}
-		if err := os.Chmod(dir, os.ModePerm); err != nil {
-			return errors.Wrapf(err, "failed to chmod temporary data directory: %s", dir)
-		}
-		logger.Infof(ctx, "Temporary data directory created: %s", dir)
-	}
-	return nil
-}
-
-func NewDownloader(_ context.Context, store *storage.DataStore, format core.DataLoadingConfig_LiteralMapFormat, mode core.IOStrategy_DownloadMode, executionVolumePath string, isGitBased bool) Downloader {
+func NewDownloader(_ context.Context, store *storage.DataStore, format core.DataLoadingConfig_LiteralMapFormat, mode core.IOStrategy_DownloadMode) Downloader {
 	return Downloader{
-		format:              format,
-		store:               store,
-		mode:                mode,
-		executionVolumePath: executionVolumePath,
-		isGitBased:          isGitBased,
+		format: format,
+		store:  store,
+		mode:   mode,
 	}
 }

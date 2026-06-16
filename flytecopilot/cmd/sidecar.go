@@ -179,7 +179,7 @@ func NewUploadCommand(opts *RootOptions) *cobra.Command {
 		RootOptions: opts,
 	}
 
-	// deleteCmd represents the delete command
+	// uploadCmd represents the upload command
 	uploadCmd := &cobra.Command{
 		Use:   "sidecar <opts>",
 		Short: "uploads flyteData from the localpath to a remote dir.",

@@ -3,8 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -94,19 +92,14 @@ func (d *DownloadOptions) Download(ctx context.Context) error {
 		}
 		data.HydrateInputOutputConfigs(downloadConfigs, variableMap, d.localDirectoryPath)
 
-		isGitBased, err := strconv.ParseBool(os.Getenv("DOMINO_IS_GIT_BASED"))
-		if err != nil {
-			isGitBased = false
-		}
-
-		dl := data.NewDownloader(ctx, d.Store, core.DataLoadingConfig_LiteralMapFormat(f), core.IOStrategy_DownloadMode(m), d.downloadConfigDir, isGitBased)
+		dl := data.NewDownloader(ctx, d.Store, core.DataLoadingConfig_LiteralMapFormat(f), core.IOStrategy_DownloadMode(m))
 		childCtx := ctx
 		cancelFn := func() {}
 		if d.timeout > 0 {
 			childCtx, cancelFn = context.WithTimeout(ctx, d.timeout)
 		}
 		defer cancelFn()
-		err = dl.DownloadInputs(childCtx, storage.DataReference(d.remoteInputsPath), d.localDirectoryPath, downloadConfigs)
+		err := dl.DownloadInputs(childCtx, storage.DataReference(d.remoteInputsPath), d.localDirectoryPath, downloadConfigs)
 		if err != nil {
 			logger.Errorf(ctx, "Downloading failed, err %s", err)
 			return err
@@ -129,11 +122,11 @@ func NewDownloadCommand(opts *RootOptions) *cobra.Command {
 		RootOptions: opts,
 	}
 
-	// deleteCmd represents the delete command
+	// downloadCmd represents the download command
 	downloadCmd := &cobra.Command{
 		Use:   "download <opts>",
 		Short: "downloads flytedata from the remotepath to a local directory.",
-		Long:  `Currently it looks at the outputs.pb and creates one file per variable.`,
+		Long:  `Currently it looks at the inputs.pb and creates one file per variable.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return downloadOpts.Download(context.Background())
 		},
@@ -142,7 +135,7 @@ func NewDownloadCommand(opts *RootOptions) *cobra.Command {
 	downloadCmd.Flags().StringVarP(&downloadOpts.remoteInputsPath, "from-remote", "f", "", "The remote path/key for inputs in stow store.")
 	downloadCmd.Flags().StringVarP(&downloadOpts.remoteOutputsPrefix, "to-output-prefix", "", "", "The remote path/key prefix for outputs in stow store. this is mostly used to write errors.pb.")
 	downloadCmd.Flags().StringVarP(&downloadOpts.localDirectoryPath, "to-local-dir", "o", "", "The local directory on disk where data should be downloaded. This is typically set to /execution-vol/flows/workflow/inputs. Use --download-config-file-path to override this for individual inputs.")
-	downloadCmd.Flags().StringVarP(&downloadOpts.downloadConfigDir, "download-config-dir", "", "/execution-vol", "See --download-config-file-path. This is typically set to /execution-vol.")
+	downloadCmd.Flags().StringVarP(&downloadOpts.downloadConfigDir, "download-config-dir", "", "", "See --download-config-file-path. This is typically set to /execution-vol.")
 	downloadCmd.Flags().StringVarP(&downloadOpts.downloadConfigFilePath, "download-config-file-path", "", "", "Path to a JSON file configuring downloads. It maps input variable names to a FileDownloadConfig, which specifies the path to download the blob to. If the provided paths are subpaths, such as /data/quick-start/report.pdf, use --download-config-dir to specify the root of the subpaths.")
 	downloadCmd.Flags().StringVarP(&downloadOpts.metadataFormat, "format", "m", core.DataLoadingConfig_JSON.String(), fmt.Sprintf("What should be the output format for the primitive and structured types. Options [%v]", GetFormatVals()))
 	downloadCmd.Flags().StringVarP(&downloadOpts.downloadMode, "download-mode", "d", core.IOStrategy_DOWNLOAD_EAGER.String(), fmt.Sprintf("Download mode to use. Options [%v]", GetDownloadModeVals()))
