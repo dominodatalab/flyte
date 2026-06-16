@@ -38,12 +38,10 @@ type Downloader struct {
 // createFileWriter creates parent directories and opens path for writing.
 func createFileWriter(path string) (*os.File, error) {
 	dir := filepath.Dir(path)
-	// os.MkdirAll creates the specified directory structure if it doesn’t already exist
-	// 0777: the directory can be read and written by anyone
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		return nil, errors.Wrapf(err, "failed to make dir at path %s", dir)
 	}
-	if err := os.Chmod(dir, 0777); err != nil {
+	if err := os.Chmod(dir, os.ModePerm); err != nil {
 		return nil, errors.Wrapf(err, "failed to chmod directory at path %s", dir)
 	}
 	writer, err := os.Create(path)
@@ -550,7 +548,7 @@ func (d Downloader) DownloadInputs(ctx context.Context, inputRef storage.DataRef
 	logger.Infof(ctx, "Downloading inputs from [%s]", inputRef)
 	defer logger.Infof(ctx, "Exited downloading inputs from [%s]", inputRef)
 	// downloader prep
-	if err := prepareDataDirectories(ctx, d.executionVolumePath, d.isGitBased); err != nil {
+	if err := d.PrepareDataDirectories(ctx); err != nil {
 		return errors.Wrapf(err, "failed to prepare data directories")
 	}
 	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
@@ -597,16 +595,16 @@ func (d Downloader) DownloadInputs(ctx context.Context, inputRef storage.DataRef
 	return nil
 }
 
-func prepareDataDirectories(ctx context.Context, executionVolumePath string, isGitBased bool) error {
+func (d Downloader) PrepareDataDirectories(ctx context.Context) error {
 	directoriesToRemove := AllowedDirectories
 	var directoriesToCreate []string
-	if isGitBased {
+	if d.isGitBased {
 		directoriesToCreate = AllowedDirectoriesGBP
 	} else {
 		directoriesToCreate = AllowedDirectoriesLegacy
 	}
 	for _, path := range directoriesToRemove {
-		dir := filepath.Join(executionVolumePath, path)
+		dir := filepath.Join(d.executionVolumePath, path)
 		if _, err := os.Stat(dir); err == nil {
 			logger.Infof(ctx, "Removing temporary data directory: %s", dir)
 			if err := os.RemoveAll(dir); err != nil {
@@ -618,7 +616,7 @@ func prepareDataDirectories(ctx context.Context, executionVolumePath string, isG
 	}
 
 	for _, path := range directoriesToCreate {
-		dir := filepath.Join(executionVolumePath, path)
+		dir := filepath.Join(d.executionVolumePath, path)
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 			return errors.Wrapf(err, "failed to create temporary data directory: %s", dir)
 		}

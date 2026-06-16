@@ -94,7 +94,6 @@ func (d *DownloadOptions) Download(ctx context.Context) error {
 		}
 		data.HydrateInputOutputConfigs(downloadConfigs, variableMap, d.localDirectoryPath)
 
-		// The DOMINO_IS_GIT_BASED env var always wins; there is no corresponding CLI flag.
 		isGitBased, err := strconv.ParseBool(os.Getenv("DOMINO_IS_GIT_BASED"))
 		if err != nil {
 			isGitBased = false
