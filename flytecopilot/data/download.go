@@ -46,7 +46,7 @@ func createFileWriter(path string) (*os.File, error) {
 	}
 	writer, err := os.Create(path)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to open file at path %s", path)
+		return nil, errors.Wrapf(err, "failed to create file at path %s", path)
 	}
 	return writer, nil
 }
@@ -605,13 +605,15 @@ func (d Downloader) PrepareDataDirectories(ctx context.Context) error {
 	}
 	for _, path := range directoriesToRemove {
 		dir := filepath.Join(d.executionVolumePath, path)
-		if _, err := os.Stat(dir); err == nil {
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
+			logger.Infof(ctx, "Temporary data directory does not exist: %s", dir)
+		} else if err != nil {
+			return errors.Wrapf(err, "failed to stat temporary data directory: %s", dir)
+		} else {
 			logger.Infof(ctx, "Removing temporary data directory: %s", dir)
 			if err := os.RemoveAll(dir); err != nil {
 				return errors.Wrapf(err, "failed to remove temporary data directory: %s", dir)
 			}
-		} else {
-			logger.Infof(ctx, "Temporary data directory does not exist: %s", dir)
 		}
 	}
 

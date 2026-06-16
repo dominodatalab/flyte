@@ -421,6 +421,73 @@ func TestPrepareDataDirectories(t *testing.T) {
 	})
 }
 
+func TestDownloadInputs(t *testing.T) {
+	s, err := storage.NewDataStore(&storage.Config{Type: storage.TypeMemory}, promutils.NewTestScope())
+	assert.NoError(t, err)
+
+	// Write the input metadata message that DownloadInputs will read from remote storage
+	inputRef := storage.DataReference("s3://container/inputs.pb")
+	inputs := &core.LiteralMap{
+		Literals: map[string]*core.Literal{
+			"x": {
+				Value: &core.Literal_Scalar{
+					Scalar: &core.Scalar{
+						Value: &core.Scalar_Primitive{
+							Primitive: &core.Primitive{
+								Value: &core.Primitive_StringValue{StringValue: "hello"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	err = s.WriteProtobuf(context.Background(), inputRef, storage.Options{}, inputs)
+	assert.NoError(t, err)
+
+	// executionVolumePath holds the data directories that DownloadInputs prepares (and cleans up)
+	volumePath, err := os.MkdirTemp("", "download_inputs_volume")
+	assert.NoError(t, err)
+	defer func() {
+		assert.NoError(t, os.RemoveAll(volumePath))
+	}()
+
+	// Seed a stale file in a removable allowed directory to confirm it gets cleaned up
+	dataDir := filepath.Join(volumePath, AllowedDirectoryGBPDatasetsMount)
+	assert.NoError(t, os.MkdirAll(dataDir, os.ModePerm))
+	staleFile := filepath.Join(dataDir, "stale.txt")
+	assert.NoError(t, os.WriteFile(staleFile, []byte("stale"), os.ModePerm))
+
+	outputDir, err := os.MkdirTemp("", "download_inputs_output")
+	assert.NoError(t, err)
+	defer func() {
+		assert.NoError(t, os.RemoveAll(outputDir))
+	}()
+
+	d := Downloader{
+		store:               s,
+		format:              core.DataLoadingConfig_JSON,
+		executionVolumePath: volumePath,
+		isGitBased:          true,
+	}
+
+	downloadConfigs := map[string]FileIOConfig{
+		"x": {Path: filepath.Join(dataDir, "x"), VariableName: "x"},
+	}
+
+	err = d.DownloadInputs(context.Background(), inputRef, outputDir, downloadConfigs)
+	assert.NoError(t, err)
+
+	// Stale files should be removed by the data directory preparation step
+	_, statErr := os.Stat(staleFile)
+	assert.True(t, os.IsNotExist(statErr), "expected stale file %s to be removed", staleFile)
+
+	// New inputs should be written
+	varContents, err := os.ReadFile(filepath.Join(dataDir, "x"))
+	assert.NoError(t, err)
+	assert.Equal(t, "hello", string(varContents))
+}
+
 func TestHandleScalar(t *testing.T) {
 	t.Run("Handles Union Scalar with scalar value", func(t *testing.T) {
 		d := Downloader{}
