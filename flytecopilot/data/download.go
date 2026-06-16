@@ -30,8 +30,9 @@ type Downloader struct {
 	format core.DataLoadingConfig_LiteralMapFormat
 	store  *storage.DataStore
 	// TODO support download mode
-	mode       core.IOStrategy_DownloadMode
-	isGitBased bool
+	mode                core.IOStrategy_DownloadMode
+	isGitBased          bool
+	executionVolumePath string
 }
 
 // createFileWriter creates parent directories and opens path for writing.
@@ -549,8 +550,7 @@ func (d Downloader) DownloadInputs(ctx context.Context, inputRef storage.DataRef
 	logger.Infof(ctx, "Downloading inputs from [%s]", inputRef)
 	defer logger.Infof(ctx, "Exited downloading inputs from [%s]", inputRef)
 	// downloader prep
-	isGitBased := os.Getenv("DOMINO_IS_GIT_BASED") == "true"
-	if err := prepareDataDirectories(ctx, isGitBased); err != nil {
+	if err := prepareDataDirectories(ctx, d.executionVolumePath, d.isGitBased); err != nil {
 		return errors.Wrapf(err, "failed to prepare data directories")
 	}
 	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
@@ -597,7 +597,7 @@ func (d Downloader) DownloadInputs(ctx context.Context, inputRef storage.DataRef
 	return nil
 }
 
-func prepareDataDirectories(ctx context.Context, isGitBased bool) error {
+func prepareDataDirectories(ctx context.Context, executionVolumePath string, isGitBased bool) error {
 	directoriesToRemove := AllowedDirectories
 	var directoriesToCreate []string
 	if isGitBased {
@@ -606,7 +606,7 @@ func prepareDataDirectories(ctx context.Context, isGitBased bool) error {
 		directoriesToCreate = AllowedDirectoriesLegacy
 	}
 	for _, path := range directoriesToRemove {
-		dir := filepath.Join("/execution-vol", path)
+		dir := filepath.Join(executionVolumePath, path)
 		if _, err := os.Stat(dir); err == nil {
 			logger.Infof(ctx, "Removing temporary data directory: %s", dir)
 			if err := os.RemoveAll(dir); err != nil {
@@ -618,7 +618,7 @@ func prepareDataDirectories(ctx context.Context, isGitBased bool) error {
 	}
 
 	for _, path := range directoriesToCreate {
-		dir := filepath.Join("/execution-vol", path)
+		dir := filepath.Join(executionVolumePath, path)
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 			return errors.Wrapf(err, "failed to create temporary data directory: %s", dir)
 		}
@@ -630,11 +630,12 @@ func prepareDataDirectories(ctx context.Context, isGitBased bool) error {
 	return nil
 }
 
-func NewDownloader(_ context.Context, store *storage.DataStore, format core.DataLoadingConfig_LiteralMapFormat, mode core.IOStrategy_DownloadMode, isGitBased bool) Downloader {
+func NewDownloader(_ context.Context, store *storage.DataStore, format core.DataLoadingConfig_LiteralMapFormat, mode core.IOStrategy_DownloadMode, executionVolumePath string, isGitBased bool) Downloader {
 	return Downloader{
-		format:     format,
-		store:      store,
-		mode:       mode,
-		isGitBased: isGitBased,
+		format:              format,
+		store:               store,
+		mode:                mode,
+		executionVolumePath: executionVolumePath,
+		isGitBased:          isGitBased,
 	}
 }
