@@ -30,21 +30,30 @@ type Downloader struct {
 	format core.DataLoadingConfig_LiteralMapFormat
 	store  *storage.DataStore
 	// TODO support download mode
-	mode core.IOStrategy_DownloadMode
+	mode                              core.IOStrategy_DownloadMode
+	executionVolumeFlowsSubfolderPath string
+	allowedDirectories                []string
 }
 
 // createFileWriter creates parent directories and opens path for writing.
-func createFileWriter(path string) (*os.File, error) {
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		return nil, errors.Wrapf(err, "failed to make dir at path %s", dir)
+func createFileWriter(rootDir, relPath string) (*os.File, error) {
+	if relDir := filepath.Dir(relPath); relDir != "." {
+		dir := filepath.Join(rootDir, relDir)
+		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+			return nil, errors.Wrapf(err, "failed to make dir at path %s", dir)
+		}
+		if err := os.Chmod(dir, os.ModePerm); err != nil {
+			return nil, errors.Wrapf(err, "failed to chmod directory at path %s", dir)
+		}
 	}
-	if err := os.Chmod(dir, os.ModePerm); err != nil {
-		return nil, errors.Wrapf(err, "failed to chmod directory at path %s", dir)
-	}
-	writer, err := os.Create(path)
+	root, err := os.OpenRoot(rootDir)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create file at path %s", path)
+		return nil, errors.Wrapf(err, "failed to open root at path %s", rootDir)
+	}
+	defer root.Close()
+	writer, err := root.Create(relPath)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create file at path %s/%s", rootDir, relPath)
 	}
 	return writer, nil
 }
@@ -195,7 +204,12 @@ func (d Downloader) handleBlob(ctx context.Context, blob *core.Blob, toPath stri
 				newPath := filepath.Join(toPath, relativePath)
 
 				mu.Lock()
-				writer, err := createFileWriter(newPath)
+				rootDir, relPath, err := getAllowedRootDirectoryAndRelativePath(newPath, d.allowedDirectories)
+				if err != nil {
+					logger.Errorf(ctx, "failed to get allowed root directory and relative path for file at path %s", newPath)
+					return
+				}
+				writer, err := createFileWriter(rootDir, relPath)
 				mu.Unlock()
 				if err != nil {
 					logger.Errorf(ctx, "failed to create file at path [%s]: %v", newPath, err)
@@ -253,7 +267,12 @@ func (d Downloader) handleBlob(ctx context.Context, blob *core.Blob, toPath stri
 			}
 		}()
 
-		writer, err := createFileWriter(toPath)
+		rootDir, relPath, err := getAllowedRootDirectoryAndRelativePath(toPath, d.allowedDirectories)
+		if err != nil {
+			logger.Errorf(ctx, "failed to get allowed root directory and relative path for file at path %s", toPath)
+			return nil, err
+		}
+		writer, err := createFileWriter(rootDir, relPath)
 		if err != nil {
 			return nil, err
 		}
@@ -298,7 +317,12 @@ func (d Downloader) handleError(_ context.Context, b *core.Error, toFilePath str
 func (d Downloader) handleGeneric(ctx context.Context, b *structpb.Struct, toFilePath string, writeToFile bool) (interface{}, error) {
 	if writeToFile && b != nil {
 		m := jsonpb.Marshaler{}
-		writer, err := createFileWriter(toFilePath)
+		rootDir, relPath, err := getAllowedRootDirectoryAndRelativePath(toFilePath, d.allowedDirectories)
+		if err != nil {
+			logger.Errorf(ctx, "failed to get allowed root directory and relative path for file at path %s", toFilePath)
+			return nil, err
+		}
+		writer, err := createFileWriter(rootDir, relPath)
 		if err != nil {
 			return nil, err
 		}
@@ -542,20 +566,23 @@ func (d Downloader) RecursiveDownload(ctx context.Context, inputs *core.LiteralM
 	return vmap, m, nil
 }
 
-func (d Downloader) DownloadInputs(ctx context.Context, inputRef storage.DataReference, outputDir string, downloadConfigs map[string]FileIOConfig) error {
+func (d Downloader) ReadInputs(ctx context.Context, inputRef storage.DataReference, outputDir string, downloadConfigs map[string]FileIOConfig) (*core.LiteralMap, error) {
 	logger.Infof(ctx, "Downloading inputs from [%s]", inputRef)
 	defer logger.Infof(ctx, "Exited downloading inputs from [%s]", inputRef)
 	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
 		logger.Errorf(ctx, "Failed to create output directories, err: %s", err)
-		return err
+		return nil, err
 	}
 	inputs := &core.LiteralMap{}
 	err := d.store.ReadProtobuf(ctx, inputRef, inputs)
 	if err != nil {
 		logger.Errorf(ctx, "Failed to download inputs from [%s], err [%s]", inputRef, err)
-		return errors.Wrapf(err, "failed to download input metadata message from remote store")
+		return nil, errors.Wrapf(err, "failed to download input metadata message from remote store")
 	}
+	return inputs, nil
+}
 
+func (d Downloader) DownloadInputs(ctx context.Context, inputs *core.LiteralMap, outputDir string, downloadConfigs map[string]FileIOConfig) error {
 	varMap, lMap, err := d.RecursiveDownload(ctx, inputs, downloadConfigs, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to download input variable from remote store")
@@ -588,10 +615,12 @@ func (d Downloader) DownloadInputs(ctx context.Context, inputRef storage.DataRef
 	return nil
 }
 
-func NewDownloader(_ context.Context, store *storage.DataStore, format core.DataLoadingConfig_LiteralMapFormat, mode core.IOStrategy_DownloadMode) Downloader {
+func NewDownloader(_ context.Context, store *storage.DataStore, format core.DataLoadingConfig_LiteralMapFormat, mode core.IOStrategy_DownloadMode, executionVolumeFlowsSubfolderPath string, allowedDirectories []string) Downloader {
 	return Downloader{
-		format: format,
-		store:  store,
-		mode:   mode,
+		format:                            format,
+		store:                             store,
+		mode:                              mode,
+		executionVolumeFlowsSubfolderPath: executionVolumeFlowsSubfolderPath,
+		allowedDirectories:                allowedDirectories,
 	}
 }

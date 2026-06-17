@@ -3,6 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"maps"
+	"slices"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -16,15 +18,16 @@ import (
 
 type DownloadOptions struct {
 	*RootOptions
-	remoteInputsPath       string
-	remoteOutputsPrefix    string
-	localDirectoryPath     string
-	downloadConfigDir      string
-	downloadConfigFilePath string
-	inputInterface         []byte
-	metadataFormat         string
-	downloadMode           string
-	timeout                time.Duration
+	remoteInputsPath                  string
+	remoteOutputsPrefix               string
+	localDirectoryPath                string
+	allowedDirectories                []string
+	executionVolumeFlowsSubfolderPath string
+	downloadConfigFilePath            string
+	inputInterface                    []byte
+	metadataFormat                    string
+	downloadMode                      string
+	timeout                           time.Duration
 }
 
 func GetFormatVals() []string {
@@ -83,23 +86,40 @@ func (d *DownloadOptions) Download(ctx context.Context) error {
 		var downloadConfigs map[string]data.FileIOConfig
 		if d.downloadConfigFilePath != "" {
 			var err error
-			downloadConfigs, err = data.LoadFileIOConfigs(d.downloadConfigFilePath, d.downloadConfigDir, data.AllowedDirectories)
+			downloadConfigs, err = data.LoadFileIOConfigs(d.downloadConfigFilePath, d.executionVolumeFlowsSubfolderPath, data.AllowedDirectories)
 			if err != nil {
 				return fmt.Errorf("failed to load download configs: %w", err)
 			}
 		} else {
 			downloadConfigs = make(map[string]data.FileIOConfig)
 		}
-		data.HydrateInputOutputConfigs(downloadConfigs, variableMap, d.localDirectoryPath)
+		data.HydrateInputOutputConfigs(downloadConfigs, slices.Collect(maps.Keys(variableMap.GetVariables())), d.localDirectoryPath)
 
-		dl := data.NewDownloader(ctx, d.Store, core.DataLoadingConfig_LiteralMapFormat(f), core.IOStrategy_DownloadMode(m))
+		allowedDirectories := data.GetAllowedDirectoriesWithRootDirectory(d.executionVolumeFlowsSubfolderPath)
+		if d.allowedDirectories != nil {
+			allowedDirectories = append(allowedDirectories, d.allowedDirectories...)
+		}
+		dl := data.NewDownloader(
+			ctx,
+			d.Store,
+			core.DataLoadingConfig_LiteralMapFormat(f),
+			core.IOStrategy_DownloadMode(m),
+			d.executionVolumeFlowsSubfolderPath,
+			allowedDirectories,
+		)
 		childCtx := ctx
 		cancelFn := func() {}
 		if d.timeout > 0 {
 			childCtx, cancelFn = context.WithTimeout(ctx, d.timeout)
 		}
 		defer cancelFn()
-		err := dl.DownloadInputs(childCtx, storage.DataReference(d.remoteInputsPath), d.localDirectoryPath, downloadConfigs)
+
+		inputs, err := dl.ReadInputs(childCtx, storage.DataReference(d.remoteInputsPath), d.localDirectoryPath, downloadConfigs)
+		if err != nil {
+			return fmt.Errorf("failed to read inputs from remote store: %w", err)
+		}
+		data.HydrateInputOutputConfigs(downloadConfigs, slices.Collect(maps.Keys(inputs.GetLiterals())), d.localDirectoryPath)
+		err = dl.DownloadInputs(childCtx, inputs, d.localDirectoryPath, downloadConfigs)
 		if err != nil {
 			logger.Errorf(ctx, "Downloading failed, err %s", err)
 			return err
@@ -135,8 +155,8 @@ func NewDownloadCommand(opts *RootOptions) *cobra.Command {
 	downloadCmd.Flags().StringVarP(&downloadOpts.remoteInputsPath, "from-remote", "f", "", "The remote path/key for inputs in stow store.")
 	downloadCmd.Flags().StringVarP(&downloadOpts.remoteOutputsPrefix, "to-output-prefix", "", "", "The remote path/key prefix for outputs in stow store. this is mostly used to write errors.pb.")
 	downloadCmd.Flags().StringVarP(&downloadOpts.localDirectoryPath, "to-local-dir", "o", "", "The local directory on disk where data should be downloaded. This is typically set to /execution-vol/flows/workflow/inputs. Use --download-config-file-path to override this for individual inputs.")
-	downloadCmd.Flags().StringVarP(&downloadOpts.downloadConfigDir, "download-config-dir", "", "", "See --download-config-file-path. This is typically set to /execution-vol.")
-	downloadCmd.Flags().StringVarP(&downloadOpts.downloadConfigFilePath, "download-config-file-path", "", "", "Path to a JSON file configuring downloads. It maps input variable names to a FileDownloadConfig, which specifies the path to download the blob to. If the provided paths are subpaths, such as /data/quick-start/report.pdf, use --download-config-dir to specify the root of the subpaths.")
+	downloadCmd.Flags().StringVarP(&downloadOpts.executionVolumeFlowsSubfolderPath, "execution-volume-flows-subfolder-path", "", "/execution-vol/flows", "The path to the execution volume flows subfolder.")
+	downloadCmd.Flags().StringVarP(&downloadOpts.downloadConfigFilePath, "download-config-file-path", "", "", "Path to a JSON file configuring downloads. It maps input variable names to a FileDownloadConfig, which specifies the path to download the blob to. If the provided paths are subpaths (for example, /mnt/data/quick-start/report.pdf is a subpath of /execution-vol/flows), use --execution-volume-flows-subfolder-path to specify the root of the subpaths.")
 	downloadCmd.Flags().StringVarP(&downloadOpts.metadataFormat, "format", "m", core.DataLoadingConfig_JSON.String(), fmt.Sprintf("What should be the output format for the primitive and structured types. Options [%v]", GetFormatVals()))
 	downloadCmd.Flags().StringVarP(&downloadOpts.downloadMode, "download-mode", "d", core.IOStrategy_DOWNLOAD_EAGER.String(), fmt.Sprintf("Download mode to use. Options [%v]", GetDownloadModeVals()))
 	downloadCmd.Flags().DurationVarP(&downloadOpts.timeout, "timeout", "t", time.Hour*1, "Max time to allow for downloads to complete, default is 1H")

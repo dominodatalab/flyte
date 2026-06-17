@@ -17,7 +17,7 @@ func TestPrepareDataDirectories(t *testing.T) {
 			assert.NoError(t, os.RemoveAll(volumePath))
 		}()
 
-		d := Preparer{executionVolumePath: volumePath, isGitBased: true}
+		d := Preparer{executionVolumeFlowsSubfolderPath: volumePath, isGitBased: true}
 		err = d.PrepareDataDirectories(context.Background())
 		assert.NoError(t, err)
 
@@ -40,7 +40,7 @@ func TestPrepareDataDirectories(t *testing.T) {
 			assert.NoError(t, os.RemoveAll(volumePath))
 		}()
 
-		d := Preparer{executionVolumePath: volumePath, isGitBased: false}
+		d := Preparer{executionVolumeFlowsSubfolderPath: volumePath, isGitBased: false}
 		err = d.PrepareDataDirectories(context.Background())
 		assert.NoError(t, err)
 
@@ -70,7 +70,7 @@ func TestPrepareDataDirectories(t *testing.T) {
 			assert.NoError(t, os.WriteFile(filepath.Join(fullDir, "stale.txt"), []byte("stale"), os.ModePerm))
 		}
 
-		d := Preparer{executionVolumePath: volumePath, isGitBased: true}
+		d := Preparer{executionVolumeFlowsSubfolderPath: volumePath, isGitBased: true}
 		err = d.PrepareDataDirectories(context.Background())
 		assert.NoError(t, err)
 
@@ -94,7 +94,7 @@ func TestPrepareDataDirectories(t *testing.T) {
 			assert.NoError(t, os.RemoveAll(volumePath))
 		}()
 
-		d := Preparer{executionVolumePath: volumePath, isGitBased: true}
+		d := Preparer{executionVolumeFlowsSubfolderPath: volumePath, isGitBased: true}
 		err = d.PrepareDataDirectories(context.Background())
 		assert.NoError(t, err)
 	})

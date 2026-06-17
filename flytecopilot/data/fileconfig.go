@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/flyteorg/flyte/flyteidl/gen/pb-go/flyteidl/core"
 	"github.com/pkg/errors"
 )
 
@@ -46,6 +45,14 @@ var AllowedDirectoriesLegacy = []string{
 	AllowedDirectoryLegacyNetAppVolumesMount,
 }
 
+func GetAllowedDirectoriesWithRootDirectory(rootDirectory string) []string {
+	allowedDirectories := make([]string, len(AllowedDirectories))
+	for i, dir := range AllowedDirectories {
+		allowedDirectories[i] = path.Join(rootDirectory, dir)
+	}
+	return allowedDirectories
+}
+
 func loadFileIOConfigsFromPath(path string) ([]FileIOConfig, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
@@ -82,8 +89,8 @@ func LoadFileIOConfigs(fileIOConfigFilePath string, fileIOConfigDir string, allo
 
 // For any input/output variables that are missing a FileIOConfig, add it with
 // the explicit default path e.g. /execution-vol/flows/workflow/outputs/datasas7bdat
-func HydrateInputOutputConfigs(configs map[string]FileIOConfig, vars *core.VariableMap, localDirectoryPath string) map[string]FileIOConfig {
-	for varName := range vars.GetVariables() {
+func HydrateInputOutputConfigs(configs map[string]FileIOConfig, varNames []string, localDirectoryPath string) map[string]FileIOConfig {
+	for _, varName := range varNames {
 		if _, ok := configs[varName]; !ok {
 			filename := varName
 			configs[varName] = FileIOConfig{

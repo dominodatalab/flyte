@@ -4,7 +4,9 @@ import (
 	"context"
 	stderrors "errors"
 	"fmt"
+	"maps"
 	"path"
+	"slices"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -33,9 +35,10 @@ type UploadOptions struct {
 	// The remote prefix where all the raw outputs should be uploaded of the form s3://bucket/prefix/
 	remoteOutputsRawPrefix string
 	// Local directory path where the sidecar should look for outputs.
-	localDirectoryPath   string
-	uploadConfigDir      string
-	uploadConfigFilePath string
+	localDirectoryPath                string
+	allowedDirectories                []string
+	executionVolumeFlowsSubfolderPath string
+	uploadConfigFilePath              string
 	// Non primitive types will be dumped in this output format
 	metadataFormat        string
 	uploadMode            string
@@ -135,17 +138,29 @@ func (u *UploadOptions) uploader(ctx context.Context) error {
 	var uploadConfigs map[string]data.FileIOConfig
 	if u.uploadConfigFilePath != "" {
 		var err error
-		uploadConfigs, err = data.LoadFileIOConfigs(u.uploadConfigFilePath, u.uploadConfigDir, data.AllowedDirectories)
+		uploadConfigs, err = data.LoadFileIOConfigs(u.uploadConfigFilePath, u.executionVolumeFlowsSubfolderPath, data.AllowedDirectories)
 		if err != nil {
 			return fmt.Errorf("failed to load upload configs: %w", err)
 		}
 	} else {
 		uploadConfigs = make(map[string]data.FileIOConfig)
 	}
-	data.HydrateInputOutputConfigs(uploadConfigs, outputInterface, u.localDirectoryPath)
+	data.HydrateInputOutputConfigs(uploadConfigs, slices.Collect(maps.Keys(outputInterface.GetVariables())), u.localDirectoryPath)
 
+	allowedDirectories := data.GetAllowedDirectoriesWithRootDirectory(u.executionVolumeFlowsSubfolderPath)
+	if u.allowedDirectories != nil {
+		allowedDirectories = append(allowedDirectories, u.allowedDirectories...)
+	}
 	errorFilePath := path.Join(u.localDirectoryPath, ErrorFile)
-	dl := data.NewUploader(ctx, u.Store, core.DataLoadingConfig_LiteralMapFormat(f), core.IOStrategy_UploadMode(m), ErrorFile)
+	dl := data.NewUploader(
+		ctx,
+		u.Store,
+		core.DataLoadingConfig_LiteralMapFormat(f),
+		core.IOStrategy_UploadMode(m),
+		ErrorFile,
+		u.executionVolumeFlowsSubfolderPath,
+		allowedDirectories,
+	)
 
 	childCtx, cancelFn = context.WithTimeout(ctx, u.timeout)
 	defer cancelFn()
@@ -192,8 +207,8 @@ func NewUploadCommand(opts *RootOptions) *cobra.Command {
 	uploadCmd.Flags().StringVarP(&uploadOptions.remoteOutputsPrefix, "to-output-prefix", "o", "", "The remote path/key prefix for output metadata in stow store.")
 	uploadCmd.Flags().StringVarP(&uploadOptions.remoteOutputsRawPrefix, "to-raw-output", "x", "", "The remote path/key prefix for outputs in remote store. This is a sandbox directory and all data will be uploaded here.")
 	uploadCmd.Flags().StringVarP(&uploadOptions.localDirectoryPath, "from-local-dir", "f", "", "The local directory on disk where data will be available for upload. This is typically set to /execution-vol/flows/workflow/outputs. Use --upload-config-file-path to override this for individual outputs.")
-	uploadCmd.Flags().StringVarP(&uploadOptions.uploadConfigDir, "upload-config-dir", "", "", "See --upload-config-file-path. This is typically set to /execution-vol.")
-	uploadCmd.Flags().StringVarP(&uploadOptions.uploadConfigFilePath, "upload-config-file-path", "", "", "Path to a JSON file configuring uploads. It maps output variable names to a FileDownloadConfig, which specifies the path to upload a blob from. If the provided paths are subpaths, such as /data/quick-start/report.pdf, use --upload-config-dir to specify the root of the subpaths.")
+	uploadCmd.Flags().StringVarP(&uploadOptions.executionVolumeFlowsSubfolderPath, "execution-volume-flows-subfolder-path", "", "/execution-vol/flows", "The path to the execution volume flows subfolder.")
+	uploadCmd.Flags().StringVarP(&uploadOptions.uploadConfigFilePath, "upload-config-file-path", "", "", "Path to a JSON file configuring uploads. It maps output variable names to a FileDownloadConfig, which specifies the path to upload a blob from. If the provided paths are subpaths (example, /mnt/data/quick-start/report.pdf which is a subpath of /execution-vol/flows), use --execution-volume-flows-subfolder-path to specify the root of the subpaths.")
 	uploadCmd.Flags().StringVarP(&uploadOptions.metadataFormat, "format", "m", core.DataLoadingConfig_JSON.String(), fmt.Sprintf("What should be the output format for the primitive and structured types. Options [%v]", GetFormatVals()))
 	uploadCmd.Flags().StringVarP(&uploadOptions.uploadMode, "upload-mode", "u", core.IOStrategy_UPLOAD_ON_EXIT.String(), fmt.Sprintf("When should upload start/upload mode. Options [%v]", GetUploadModeVals()))
 	uploadCmd.Flags().StringVarP(&uploadOptions.metaOutputName, "meta-output-name", "", "outputs.pb", "The key name under the remoteOutputPrefix that should be return to provide meta information about the outputs on successful execution")

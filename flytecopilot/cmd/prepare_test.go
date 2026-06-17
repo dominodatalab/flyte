@@ -22,8 +22,8 @@ func TestPrepareOptions_Prepare(t *testing.T) {
 		t.Setenv("DOMINO_IS_GIT_BASED", "true")
 
 		opts := &PrepareOptions{
-			RootOptions:         &RootOptions{},
-			executionVolumePath: volumePath,
+			RootOptions:                       &RootOptions{},
+			executionVolumeFlowsSubfolderPath: volumePath,
 		}
 		assert.NoError(t, opts.Prepare(context.Background()))
 
@@ -49,8 +49,8 @@ func TestPrepareOptions_Prepare(t *testing.T) {
 		t.Setenv("DOMINO_IS_GIT_BASED", "false")
 
 		opts := &PrepareOptions{
-			RootOptions:         &RootOptions{},
-			executionVolumePath: volumePath,
+			RootOptions:                       &RootOptions{},
+			executionVolumeFlowsSubfolderPath: volumePath,
 		}
 		assert.NoError(t, opts.Prepare(context.Background()))
 
@@ -77,8 +77,8 @@ func TestPrepareOptions_Prepare(t *testing.T) {
 		t.Setenv("DOMINO_IS_GIT_BASED", "not-a-bool")
 
 		opts := &PrepareOptions{
-			RootOptions:         &RootOptions{},
-			executionVolumePath: volumePath,
+			RootOptions:                       &RootOptions{},
+			executionVolumeFlowsSubfolderPath: volumePath,
 		}
 		assert.NoError(t, opts.Prepare(context.Background()))
 

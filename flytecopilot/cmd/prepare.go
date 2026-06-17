@@ -12,7 +12,7 @@ import (
 
 type PrepareOptions struct {
 	*RootOptions
-	executionVolumePath string
+	executionVolumeFlowsSubfolderPath string
 }
 
 func (d *PrepareOptions) Prepare(ctx context.Context) error {
@@ -21,7 +21,7 @@ func (d *PrepareOptions) Prepare(ctx context.Context) error {
 		isGitBased = false
 	}
 
-	p := data.NewPreparer(ctx, d.executionVolumePath, isGitBased)
+	p := data.NewPreparer(ctx, d.executionVolumeFlowsSubfolderPath, isGitBased)
 	err = p.PrepareDataDirectories(ctx)
 	if err != nil {
 		logger.Errorf(ctx, "Preparing failed, err %s", err)
@@ -46,6 +46,6 @@ func NewPrepareCommand(opts *RootOptions) *cobra.Command {
 		},
 	}
 
-	prepareCmd.Flags().StringVarP(&prepareOpts.executionVolumePath, "execution-volume-path", "e", "/execution-vol", "The path to the execution volume.")
+	prepareCmd.Flags().StringVarP(&prepareOpts.executionVolumeFlowsSubfolderPath, "execution-volume-flows-subfolder-path", "", "/execution-vol/flows", "The path to the execution volume flows subfolder.")
 	return prepareCmd
 }

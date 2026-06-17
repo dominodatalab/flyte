@@ -45,16 +45,29 @@ func IsFileReadable(fpath string, ignoreExtension bool) (string, os.FileInfo, er
 	return fpath, info, nil
 }
 
+func getAllowedRootDirectoryAndRelativePath(path string, allowedDirectories []string) (rootDir, relPath string, err error) {
+	cleanPath := filepath.Clean(path)
+	for _, dir := range allowedDirectories {
+		cleanDir := filepath.Clean(dir)
+		rel, err := filepath.Rel(cleanDir, cleanPath)
+		if err != nil || strings.HasPrefix(rel, "..") {
+			continue
+		}
+		return cleanDir, rel, nil
+	}
+	return "", "", errors.Errorf("path does not start with an allowed prefix, path: %s", cleanPath)
+}
+
 // Uploads a file to the data store.
-func UploadFileToStorage(ctx context.Context, filePath string, toPath storage.DataReference, size int64, store *storage.DataStore) error {
+func UploadFileToStorage(ctx context.Context, rootDir string, relPath string, toPath storage.DataReference, size int64, store *storage.DataStore) error {
 	return retryOnSpecificErrors(ctx, uploadFileRetryMaxAttemptIndex, uploadFileRetryDelay, func() error {
-		f, err := os.Open(filePath)
+		f, err := os.OpenInRoot(rootDir, relPath)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "failed to open file at path %s/%s", rootDir, relPath)
 		}
 		defer func() {
 			if cerr := f.Close(); cerr != nil {
-				logger.Errorf(ctx, "failed to close blob file at path [%s]", filePath)
+				logger.Errorf(ctx, "failed to close blob file at path [%s/%s]", rootDir, relPath)
 			}
 		}()
 		return store.WriteRaw(ctx, toPath, size, storage.Options{}, f)
@@ -93,14 +106,9 @@ func DownloadFileFromHTTP(ctx context.Context, ref storage.DataReference) (io.Re
 }
 
 func ValidatePath(path string, allowedDirectories []string) error {
-	cleanPath := filepath.Clean(path)
-	for _, dir := range allowedDirectories {
-		cleanDir := filepath.Clean(dir)
-		rel, err := filepath.Rel(cleanDir, cleanPath)
-		if err != nil || strings.HasPrefix(rel, "..") {
-			continue
-		}
-		return nil
+	_, _, err := getAllowedRootDirectoryAndRelativePath(path, allowedDirectories)
+	if err != nil {
+		return errors.Wrapf(err, "invalid path: %s", path)
 	}
-	return errors.Errorf("path does not start with an allowed prefix, path: %s", cleanPath)
+	return nil
 }
