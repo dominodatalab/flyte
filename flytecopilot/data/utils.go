@@ -48,7 +48,7 @@ func IsFileReadable(fpath string, ignoreExtension bool) (string, os.FileInfo, er
 // Uploads a file to the data store.
 func UploadFileToStorage(ctx context.Context, filePath string, toPath storage.DataReference, size int64, store *storage.DataStore) error {
 	return retryOnSpecificErrors(ctx, uploadFileRetryMaxAttemptIndex, uploadFileRetryDelay, func() error {
-		f, err := os.Open(filePath)
+		f, err := os.OpenInRoot(filepath.Dir(filePath), filepath.Base(filePath))
 		if err != nil {
 			return err
 		}

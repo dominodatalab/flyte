@@ -36,13 +36,19 @@ type Downloader struct {
 // createFileWriter creates parent directories and opens path for writing.
 func createFileWriter(path string) (*os.File, error) {
 	dir := filepath.Dir(path)
+	name := filepath.Base(path)
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		return nil, errors.Wrapf(err, "failed to make dir at path %s", dir)
 	}
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to open root at path %s", dir)
+	}
+	defer root.Close()
 	if err := os.Chmod(dir, os.ModePerm); err != nil {
 		return nil, errors.Wrapf(err, "failed to chmod directory at path %s", dir)
 	}
-	writer, err := os.Create(path)
+	writer, err := root.Create(name)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create file at path %s", path)
 	}
