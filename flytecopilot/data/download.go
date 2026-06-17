@@ -33,6 +33,22 @@ type Downloader struct {
 	mode core.IOStrategy_DownloadMode
 }
 
+// createFileWriter creates parent directories and opens path for writing.
+func createFileWriter(path string) (*os.File, error) {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return nil, errors.Wrapf(err, "failed to make dir at path %s", dir)
+	}
+	if err := os.Chmod(dir, os.ModePerm); err != nil {
+		return nil, errors.Wrapf(err, "failed to chmod directory at path %s", dir)
+	}
+	writer, err := os.Create(path)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create file at path %s", path)
+	}
+	return writer, nil
+}
+
 // TODO add timeout and rate limit
 // TODO use chunk to download
 func (d Downloader) handleBlob(ctx context.Context, blob *core.Blob, toPath string) (interface{}, error) {
@@ -177,21 +193,12 @@ func (d Downloader) handleBlob(ctx context.Context, blob *core.Blob, toPath stri
 				logger.Debugf(ctx, "Extracting file from %s, using relative path %s", absPath, relativePath)
 
 				newPath := filepath.Join(toPath, relativePath)
-				dir := filepath.Dir(newPath)
 
 				mu.Lock()
-				// os.MkdirAll creates the specified directory structure if it doesn’t already exist
-				// 0777: the directory can be read and written by anyone
-				err = os.MkdirAll(dir, 0777)
+				writer, err := createFileWriter(newPath)
 				mu.Unlock()
 				if err != nil {
-					logger.Errorf(ctx, "failed to make dir at path [%s]", dir)
-					return
-				}
-
-				writer, err := os.Create(newPath)
-				if err != nil {
-					logger.Errorf(ctx, "failed to open file at path [%s]", newPath)
+					logger.Errorf(ctx, "failed to create file at path [%s]: %v", newPath, err)
 					return
 				}
 				defer func() {
@@ -246,9 +253,9 @@ func (d Downloader) handleBlob(ctx context.Context, blob *core.Blob, toPath stri
 			}
 		}()
 
-		writer, err := os.Create(toPath)
+		writer, err := createFileWriter(toPath)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to open file at path %s", toPath)
+			return nil, err
 		}
 		defer func() {
 			err := writer.Close()
@@ -291,9 +298,9 @@ func (d Downloader) handleError(_ context.Context, b *core.Error, toFilePath str
 func (d Downloader) handleGeneric(ctx context.Context, b *structpb.Struct, toFilePath string, writeToFile bool) (interface{}, error) {
 	if writeToFile && b != nil {
 		m := jsonpb.Marshaler{}
-		writer, err := os.Create(toFilePath)
+		writer, err := createFileWriter(toFilePath)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to open file at path %s", toFilePath)
+			return nil, err
 		}
 		defer func() {
 			err := writer.Close()

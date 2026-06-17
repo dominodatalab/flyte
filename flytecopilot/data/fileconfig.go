@@ -16,19 +16,34 @@ type FileIOConfig struct {
 }
 
 const (
-	AllowedDirectoryGBPDatasetsMount      = "/mnt/data"
-	AllowedDirectoryGBPNetAppVolumesMount = "/mnt/netapp-volumes"
-	AllowedDirectoryWorkflowInputsMount   = "/workflow/inputs"
-	AllowedDirectoryWorkflowOutputsMount  = "/workflow/outputs"
-	AllowedDirectoryLegacyDatasetsMount   = "/domino"
+	AllowedDirectoryGBPDatasetsMount         = "/mnt/data"
+	AllowedDirectoryGBPImportedDataMount     = "/mnt/imported/data"
+	AllowedDirectoryGBPNetAppVolumesMount    = "/mnt/netapp-volumes"
+	AllowedDirectoryWorkflowInputsMount      = "/workflow/inputs"
+	AllowedDirectoryWorkflowOutputsMount     = "/workflow/outputs"
+	AllowedDirectoryLegacyDatasetsMount      = "/domino/datasets"
+	AllowedDirectoryLegacyNetAppVolumesMount = "/domino/netapp-volumes"
 )
 
 var AllowedDirectories = []string{
 	AllowedDirectoryGBPDatasetsMount,
+	AllowedDirectoryGBPImportedDataMount,
 	AllowedDirectoryGBPNetAppVolumesMount,
 	AllowedDirectoryWorkflowInputsMount,
 	AllowedDirectoryWorkflowOutputsMount,
 	AllowedDirectoryLegacyDatasetsMount,
+	AllowedDirectoryLegacyNetAppVolumesMount,
+}
+
+var AllowedDirectoriesGBP = []string{
+	AllowedDirectoryGBPDatasetsMount,
+	AllowedDirectoryGBPImportedDataMount,
+	AllowedDirectoryGBPNetAppVolumesMount,
+}
+
+var AllowedDirectoriesLegacy = []string{
+	AllowedDirectoryLegacyDatasetsMount,
+	AllowedDirectoryLegacyNetAppVolumesMount,
 }
 
 func loadFileIOConfigsFromPath(path string) ([]FileIOConfig, error) {

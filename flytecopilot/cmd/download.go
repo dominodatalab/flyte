@@ -122,11 +122,11 @@ func NewDownloadCommand(opts *RootOptions) *cobra.Command {
 		RootOptions: opts,
 	}
 
-	// deleteCmd represents the delete command
+	// downloadCmd represents the download command
 	downloadCmd := &cobra.Command{
 		Use:   "download <opts>",
 		Short: "downloads flytedata from the remotepath to a local directory.",
-		Long:  `Currently it looks at the outputs.pb and creates one file per variable.`,
+		Long:  `Currently it looks at the inputs.pb and creates one file per variable.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return downloadOpts.Download(context.Background())
 		},
