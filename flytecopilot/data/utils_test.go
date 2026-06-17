@@ -100,19 +100,25 @@ func TestDownloadFromStorage(t *testing.T) {
 	assert.NoError(t, err)
 	ref := storage.DataReference("ref")
 
-	f, err := DownloadFileFromStorage(context.TODO(), ref, store)
+	tmpDir, err := os.MkdirTemp("", "util_test")
+	assert.NoError(t, err)
+	defer func() {
+		assert.NoError(t, os.RemoveAll(tmpDir))
+	}()
+	localPath := path.Join(tmpDir, "downloaded")
+
+	err = DownloadFileFromStorage(context.TODO(), ref, localPath, store)
 	assert.Error(t, err)
-	assert.Nil(t, f)
 
 	data := []byte("data")
 	l := int64(len(data))
 
 	assert.NoError(t, store.WriteRaw(context.TODO(), ref, l, storage.Options{}, bytes.NewReader(data)))
-	f, err = DownloadFileFromStorage(context.TODO(), ref, store)
-	if assert.NoError(t, err) {
-		assert.NotNil(t, f)
-		f.Close()
-	}
+	err = DownloadFileFromStorage(context.TODO(), ref, localPath, store)
+	assert.NoError(t, err)
+	downloaded, err := os.ReadFile(localPath)
+	assert.NoError(t, err)
+	assert.Equal(t, data, downloaded)
 }
 
 func TestValidatePath(t *testing.T) {

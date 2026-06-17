@@ -45,9 +45,85 @@ func IsFileReadable(fpath string, ignoreExtension bool) (string, os.FileInfo, er
 	return fpath, info, nil
 }
 
+func allowedDirectoriesForFilePaths(allowedDirectories []string, filePaths ...string) []string {
+	roots := append([]string(nil), allowedDirectories...)
+	for _, filePath := range filePaths {
+		if filePath == "" {
+			continue
+		}
+		if _, _, err := resolvePathInAllowedRoots(filePath, roots); err == nil {
+			continue
+		}
+		dir := filepath.Clean(filePath)
+		if info, err := os.Stat(dir); err == nil && info.IsDir() {
+			roots = append(roots, dir)
+			continue
+		}
+		roots = append(roots, filepath.Clean(filepath.Dir(filePath)))
+	}
+	return roots
+}
+
+func resolvePathInAllowedRoots(filePath string, allowedDirectories []string) (root string, rel string, err error) {
+	cleanPath := filepath.Clean(filePath)
+	for _, dir := range allowedDirectories {
+		cleanDir := filepath.Clean(dir)
+		relativePath, relErr := filepath.Rel(cleanDir, cleanPath)
+		if relErr != nil || strings.HasPrefix(relativePath, "..") {
+			continue
+		}
+		if len(cleanDir) > len(root) {
+			root = cleanDir
+			rel = relativePath
+		}
+	}
+	if root == "" {
+		return "", "", errors.Errorf("path does not start with an allowed prefix, path: %s", cleanPath)
+	}
+	return root, rel, nil
+}
+
+func openFileInAllowedRoot(filePath string, allowedDirectories []string) (*os.File, error) {
+	root, rel, err := resolvePathInAllowedRoots(filePath, allowedDirectories)
+	if err != nil {
+		return nil, err
+	}
+	return os.OpenInRoot(root, rel)
+}
+
+func createFileInAllowedRoot(filePath string, allowedDirectories []string) (*os.File, error) {
+	root, rel, err := resolvePathInAllowedRoots(filePath, allowedDirectories)
+	if err != nil {
+		return nil, err
+	}
+	if err := os.MkdirAll(root, os.ModePerm); err != nil {
+		return nil, errors.Wrapf(err, "failed to make dir at path %s", root)
+	}
+	r, err := os.OpenRoot(root)
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+
+	dir := filepath.Dir(rel)
+	if dir != "." {
+		if err := r.MkdirAll(dir, os.ModePerm); err != nil {
+			return nil, errors.Wrapf(err, "failed to make dir at path %s", dir)
+		}
+		if err := r.Chmod(dir, os.ModePerm); err != nil {
+			return nil, errors.Wrapf(err, "failed to chmod directory at path %s", dir)
+		}
+	}
+	writer, err := r.Create(rel)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create file at path %s", filePath)
+	}
+	return writer, nil
+}
+
 // Uploads a file to the data store.
 func UploadFileToStorage(ctx context.Context, filePath string, toPath storage.DataReference, size int64, store *storage.DataStore) error {
-	f, err := os.Open(filePath)
+	f, err := openFileInAllowedRoot(filePath, allowedDirectoriesForFilePaths(AllowedDirectories, filePath))
 	if err != nil {
 		return err
 	}
@@ -60,21 +136,38 @@ func UploadFileToStorage(ctx context.Context, filePath string, toPath storage.Da
 	return store.WriteRaw(ctx, toPath, size, storage.Options{}, f)
 }
 
-func DownloadFileFromStorage(ctx context.Context, ref storage.DataReference, store *storage.DataStore) (io.ReadCloser, error) {
-	// We should probably directly use stow!??
+func DownloadFileFromStorage(ctx context.Context, ref storage.DataReference, localPath string, store *storage.DataStore) error {
 	m, err := store.Head(ctx, ref)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed when looking up Blob")
+		return errors.Wrapf(err, "failed when looking up Blob")
 	}
-	if m.Exists() {
-		r, err := store.ReadRaw(ctx, ref)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to read Blob from storage")
+	if !m.Exists() {
+		return fmt.Errorf("incorrect blob reference, does not exist")
+	}
+	reader, err := store.ReadRaw(ctx, ref)
+	if err != nil {
+		return errors.Wrapf(err, "failed to read Blob from storage")
+	}
+	defer func() {
+		if err := reader.Close(); err != nil {
+			logger.Errorf(ctx, "failed to close Blob read stream @ref [%s]. Error: %s", ref, err)
 		}
-		return r, err
+	}()
 
+	writer, err := createFileInAllowedRoot(localPath, allowedDirectoriesForFilePaths(AllowedDirectories, localPath))
+	if err != nil {
+		return err
 	}
-	return nil, fmt.Errorf("incorrect blob reference, does not exist")
+	defer func() {
+		if err := writer.Close(); err != nil {
+			logger.Errorf(ctx, "failed to close File write stream at path [%s]. Error: %s", localPath, err)
+		}
+	}()
+
+	if _, err := io.Copy(writer, reader); err != nil {
+		return errors.Wrapf(err, "failed to write remote data to local filesystem at path [%s]", localPath)
+	}
+	return nil
 }
 
 // Downloads data from the given HTTP URL. If context is canceled then the request will be canceled.

@@ -35,18 +35,7 @@ type Downloader struct {
 
 // createFileWriter creates parent directories and opens path for writing.
 func createFileWriter(path string) (*os.File, error) {
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		return nil, errors.Wrapf(err, "failed to make dir at path %s", dir)
-	}
-	if err := os.Chmod(dir, os.ModePerm); err != nil {
-		return nil, errors.Wrapf(err, "failed to chmod directory at path %s", dir)
-	}
-	writer, err := os.Create(path)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create file at path %s", path)
-	}
-	return writer, nil
+	return createFileInAllowedRoot(path, allowedDirectoriesForFilePaths(AllowedDirectories, path))
 }
 
 // TODO add timeout and rate limit
@@ -135,26 +124,6 @@ func (d Downloader) handleBlob(ctx context.Context, blob *core.Blob, toPath stri
 					logger.Errorf(ctx, "Failed to parse [%s] [%s]", ref, err)
 					return
 				}
-				var reader io.ReadCloser
-				if scheme == "http" || scheme == "https" {
-					reader, err = DownloadFileFromHTTP(ctx, ref)
-				} else {
-					reader, err = DownloadFileFromStorage(ctx, ref, d.store)
-				}
-				if err != nil {
-					logger.Errorf(ctx, "Failed to download from ref [%s]", ref)
-					return
-				}
-				defer func() {
-					err := reader.Close()
-					if err != nil {
-						logger.Errorf(ctx, "failed to close Blob read stream @ref [%s].\n"+
-							"Error: %s", ref, err)
-					}
-					mu.Lock()
-					readerCloseSuccessCount++
-					mu.Unlock()
-				}()
 
 				// Strip the base path from the item prefix to get the relative path
 				// For HTTP/HTTPS URLs: prefix includes bucket + path (e.g., "bucket/sm/akm6s4bgd6lwx6fhzf58-n0-0/705fe4570586b256a5b0e5fd598b4c28/sample.txt")
@@ -194,28 +163,54 @@ func (d Downloader) handleBlob(ctx context.Context, blob *core.Blob, toPath stri
 
 				newPath := filepath.Join(toPath, relativePath)
 
-				mu.Lock()
-				writer, err := createFileWriter(newPath)
-				mu.Unlock()
-				if err != nil {
-					logger.Errorf(ctx, "failed to create file at path [%s]: %v", newPath, err)
-					return
-				}
-				defer func() {
-					err := writer.Close()
+				if scheme == "http" || scheme == "https" {
+					reader, err := DownloadFileFromHTTP(ctx, ref)
 					if err != nil {
-						logger.Errorf(ctx, "failed to close File write stream.\n"+
-							"Error: [%s]", err)
+						logger.Errorf(ctx, "Failed to download from ref [%s]", ref)
+						return
 					}
+					defer func() {
+						err := reader.Close()
+						if err != nil {
+							logger.Errorf(ctx, "failed to close Blob read stream @ref [%s].\n"+
+								"Error: %s", ref, err)
+						}
+						mu.Lock()
+						readerCloseSuccessCount++
+						mu.Unlock()
+					}()
+
 					mu.Lock()
+					writer, err := createFileWriter(newPath)
+					mu.Unlock()
+					if err != nil {
+						logger.Errorf(ctx, "failed to create file at path [%s]: %v", newPath, err)
+						return
+					}
+					defer func() {
+						err := writer.Close()
+						if err != nil {
+							logger.Errorf(ctx, "failed to close File write stream.\n"+
+								"Error: [%s]", err)
+						}
+						mu.Lock()
+						writerCloseSuccessCount++
+						mu.Unlock()
+					}()
+
+					_, err = io.Copy(writer, reader)
+					if err != nil {
+						logger.Errorf(ctx, "failed to write remote data to local filesystem")
+						return
+					}
+				} else if err := DownloadFileFromStorage(ctx, ref, newPath, d.store); err != nil {
+					logger.Errorf(ctx, "Failed to download from ref [%s]: %v", ref, err)
+					return
+				} else {
+					mu.Lock()
+					readerCloseSuccessCount++
 					writerCloseSuccessCount++
 					mu.Unlock()
-				}()
-
-				_, err = io.Copy(writer, reader)
-				if err != nil {
-					logger.Errorf(ctx, "failed to write remote data to local filesystem")
-					return
 				}
 				mu.Lock()
 				downloadSuccess++
@@ -235,39 +230,42 @@ func (d Downloader) handleBlob(ctx context.Context, blob *core.Blob, toPath stri
 		logger.Infof(ctx, "successfully copied %d remote files from [%s] to local [%s]", downloadSuccess, blobRef, toPath)
 		return toPath, nil
 	} else if blob.GetMetadata().GetType().GetDimensionality() == core.BlobType_SINGLE {
-		// reader should be declared here (avoid being shared across all goroutines)
-		var reader io.ReadCloser
 		if scheme == "http" || scheme == "https" {
-			reader, err = DownloadFileFromHTTP(ctx, blobRef)
-		} else {
-			reader, err = DownloadFileFromStorage(ctx, blobRef, d.store)
+			reader, err := DownloadFileFromHTTP(ctx, blobRef)
+			if err != nil {
+				logger.Errorf(ctx, "Failed to download from ref [%s]", blobRef)
+				return nil, err
+			}
+			defer func() {
+				err := reader.Close()
+				if err != nil {
+					logger.Errorf(ctx, "failed to close Blob read stream @ref [%s]. Error: %s", blobRef, err)
+				}
+			}()
+
+			writer, err := createFileWriter(toPath)
+			if err != nil {
+				return nil, err
+			}
+			defer func() {
+				err := writer.Close()
+				if err != nil {
+					logger.Errorf(ctx, "failed to close File write stream. Error: %s", err)
+				}
+			}()
+			v, err := io.Copy(writer, reader)
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to write remote data to local filesystem")
+			}
+			logger.Infof(ctx, "Successfully copied [%d] bytes remote data from [%s] to local [%s]", v, blobRef, toPath)
+			return toPath, nil
 		}
-		if err != nil {
+
+		if err := DownloadFileFromStorage(ctx, blobRef, toPath, d.store); err != nil {
 			logger.Errorf(ctx, "Failed to download from ref [%s]", blobRef)
 			return nil, err
 		}
-		defer func() {
-			err := reader.Close()
-			if err != nil {
-				logger.Errorf(ctx, "failed to close Blob read stream @ref [%s]. Error: %s", blobRef, err)
-			}
-		}()
-
-		writer, err := createFileWriter(toPath)
-		if err != nil {
-			return nil, err
-		}
-		defer func() {
-			err := writer.Close()
-			if err != nil {
-				logger.Errorf(ctx, "failed to close File write stream. Error: %s", err)
-			}
-		}()
-		v, err := io.Copy(writer, reader)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to write remote data to local filesystem")
-		}
-		logger.Infof(ctx, "Successfully copied [%d] bytes remote data from [%s] to local [%s]", v, blobRef, toPath)
+		logger.Infof(ctx, "Successfully copied remote data from [%s] to local [%s]", blobRef, toPath)
 		return toPath, nil
 	}
 
