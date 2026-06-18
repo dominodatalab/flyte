@@ -35,6 +35,8 @@ type Downloader struct {
 }
 
 // createFileWriter creates parent directories and opens path for writing.
+// TODO: Replace with root.MkdirAll and root.Chmod after updating to go 1.25 [DOM-78340]
+// Currently, directory creation may bypass the root sandbox, which is slightly unsafe
 func createFileWriter(rootDir, relPath string) (*os.File, error) {
 	if relDir := filepath.Dir(relPath); relDir != "." {
 		dir := filepath.Join(rootDir, relDir)
