@@ -70,9 +70,12 @@ func TestUploadFile(t *testing.T) {
 	data := []byte("data")
 	l := int64(len(data))
 	assert.NoError(t, os.WriteFile(exist, data, os.ModePerm)) // #nosec G306
-	disallowed := path.Join(tmpDir, "outside", "exist-file")
-	assert.NoError(t, os.MkdirAll(path.Dir(disallowed), os.ModePerm))
-	assert.NoError(t, os.WriteFile(disallowed, data, os.ModePerm)) // #nosec G306
+
+	outsideFile := path.Join(tmpDir, "outside", "secret-file")
+	assert.NoError(t, os.MkdirAll(path.Dir(outsideFile), os.ModePerm))
+	assert.NoError(t, os.WriteFile(outsideFile, data, os.ModePerm)) // #nosec G306
+	symlinkRelPath := "escape-link"
+	assert.NoError(t, os.Symlink(outsideFile, path.Join(allowedRoot, symlinkRelPath)))
 
 	store, err := storage.NewDataStore(&storage.Config{Type: storage.TypeMemory}, promutils.NewTestScope())
 	assert.NoError(t, err)
@@ -84,7 +87,8 @@ func TestUploadFile(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Error(t, UploadFileToStorage(ctx, allowedRoot, "non-exist-file", "nonExist", l, store))
-	assert.Error(t, UploadFileToStorage(ctx, path.Dir(disallowed), "exist-file", "disallowed", l, store))
+	// symlink appears under allowedRoot but resolves outside it; OpenInRoot must reject this
+	assert.Error(t, UploadFileToStorage(ctx, allowedRoot, symlinkRelPath, "disallowed", l, store))
 }
 
 func TestDownloadFromHttp(t *testing.T) {

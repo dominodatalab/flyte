@@ -36,8 +36,8 @@ type UploadOptions struct {
 	remoteOutputsRawPrefix string
 	// Local directory path where the sidecar should look for outputs.
 	localDirectoryPath                string
-	allowedDirectories                []string
 	executionVolumeFlowsSubfolderPath string
+	allowedDirectories                []string
 	uploadConfigFilePath              string
 	// Non primitive types will be dumped in this output format
 	metadataFormat        string
@@ -158,7 +158,6 @@ func (u *UploadOptions) uploader(ctx context.Context) error {
 		core.DataLoadingConfig_LiteralMapFormat(f),
 		core.IOStrategy_UploadMode(m),
 		ErrorFile,
-		u.executionVolumeFlowsSubfolderPath,
 		allowedDirectories,
 	)
 

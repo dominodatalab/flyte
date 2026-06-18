@@ -78,14 +78,15 @@ func TestUploadOptions_Upload(t *testing.T) {
 				Store:           store,
 				errorOutputName: "errors.pb",
 			},
-			remoteOutputsPrefix: outputPath,
-			metadataFormat:      core.DataLoadingConfig_JSON.String(),
-			uploadMode:          core.IOStrategy_UPLOAD_ON_EXIT.String(),
-			startWatcherType:    containerwatcher.WatcherTypeNoop,
-			exitWatcherType:     containerwatcher.WatcherTypeFile,
-			typedInterface:      d,
-			localDirectoryPath:  tmpDir,
-			allowedDirectories:  []string{tmpDir},
+			remoteOutputsPrefix:               outputPath,
+			metadataFormat:                    core.DataLoadingConfig_JSON.String(),
+			uploadMode:                        core.IOStrategy_UPLOAD_ON_EXIT.String(),
+			startWatcherType:                  containerwatcher.WatcherTypeNoop,
+			exitWatcherType:                   containerwatcher.WatcherTypeFile,
+			typedInterface:                    d,
+			localDirectoryPath:                tmpDir,
+			executionVolumeFlowsSubfolderPath: tmpDir,
+			allowedDirectories:                []string{tmpDir},
 		}
 
 		success := path.Join(tmpDir, SuccessFile)

@@ -26,11 +26,10 @@ type Uploader struct {
 	format core.DataLoadingConfig_LiteralMapFormat
 	mode   core.IOStrategy_UploadMode
 	// TODO support multiple buckets
-	store                             *storage.DataStore
-	aggregateOutputFileName           string
-	errorFileName                     string
-	executionVolumeFlowsSubfolderPath string
-	allowedDirectories                []string
+	store                   *storage.DataStore
+	aggregateOutputFileName string
+	errorFileName           string
+	allowedDirectories      []string
 }
 
 type dirFile struct {
@@ -205,13 +204,12 @@ func (u Uploader) RecursiveUpload(ctx context.Context, vars *core.VariableMap, u
 	return nil
 }
 
-func NewUploader(_ context.Context, store *storage.DataStore, format core.DataLoadingConfig_LiteralMapFormat, mode core.IOStrategy_UploadMode, errorFileName string, executionVolumeFlowsSubfolderPath string, allowedDirectories []string) Uploader {
+func NewUploader(_ context.Context, store *storage.DataStore, format core.DataLoadingConfig_LiteralMapFormat, mode core.IOStrategy_UploadMode, errorFileName string, allowedDirectories []string) Uploader {
 	return Uploader{
-		format:                            format,
-		store:                             store,
-		errorFileName:                     errorFileName,
-		mode:                              mode,
-		executionVolumeFlowsSubfolderPath: executionVolumeFlowsSubfolderPath,
-		allowedDirectories:                allowedDirectories,
+		format:             format,
+		store:              store,
+		errorFileName:      errorFileName,
+		mode:               mode,
+		allowedDirectories: allowedDirectories,
 	}
 }

@@ -104,7 +104,6 @@ func (d *DownloadOptions) Download(ctx context.Context) error {
 			d.Store,
 			core.DataLoadingConfig_LiteralMapFormat(f),
 			core.IOStrategy_DownloadMode(m),
-			d.executionVolumeFlowsSubfolderPath,
 			allowedDirectories,
 		)
 		childCtx := ctx

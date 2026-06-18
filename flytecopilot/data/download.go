@@ -30,9 +30,8 @@ type Downloader struct {
 	format core.DataLoadingConfig_LiteralMapFormat
 	store  *storage.DataStore
 	// TODO support download mode
-	mode                              core.IOStrategy_DownloadMode
-	executionVolumeFlowsSubfolderPath string
-	allowedDirectories                []string
+	mode               core.IOStrategy_DownloadMode
+	allowedDirectories []string
 }
 
 // createFileWriter creates parent directories and opens path for writing.
@@ -202,13 +201,12 @@ func (d Downloader) handleBlob(ctx context.Context, blob *core.Blob, toPath stri
 				logger.Debugf(ctx, "Extracting file from %s, using relative path %s", absPath, relativePath)
 
 				newPath := filepath.Join(toPath, relativePath)
-
-				mu.Lock()
 				rootDir, relPath, err := getAllowedRootDirectoryAndRelativePath(newPath, d.allowedDirectories)
 				if err != nil {
 					logger.Errorf(ctx, "failed to get allowed root directory and relative path for file at path %s", newPath)
 					return
 				}
+				mu.Lock()
 				writer, err := createFileWriter(rootDir, relPath)
 				mu.Unlock()
 				if err != nil {
@@ -615,12 +613,11 @@ func (d Downloader) DownloadInputs(ctx context.Context, inputs *core.LiteralMap,
 	return nil
 }
 
-func NewDownloader(_ context.Context, store *storage.DataStore, format core.DataLoadingConfig_LiteralMapFormat, mode core.IOStrategy_DownloadMode, executionVolumeFlowsSubfolderPath string, allowedDirectories []string) Downloader {
+func NewDownloader(_ context.Context, store *storage.DataStore, format core.DataLoadingConfig_LiteralMapFormat, mode core.IOStrategy_DownloadMode, allowedDirectories []string) Downloader {
 	return Downloader{
-		format:                            format,
-		store:                             store,
-		mode:                              mode,
-		executionVolumeFlowsSubfolderPath: executionVolumeFlowsSubfolderPath,
-		allowedDirectories:                allowedDirectories,
+		format:             format,
+		store:              store,
+		mode:               mode,
+		allowedDirectories: allowedDirectories,
 	}
 }

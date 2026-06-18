@@ -54,7 +54,6 @@ func TestUploader_RecursiveUpload(t *testing.T) {
 			core.DataLoadingConfig_JSON,
 			core.IOStrategy_UPLOAD_ON_EXIT,
 			"error",
-			tmpDir,
 			[]string{tmpDir},
 		)
 		assert.NoError(t, u.RecursiveUpload(context.TODO(), vmap, uploadConfigs, errorFilePath, outputRef, rawRef))
