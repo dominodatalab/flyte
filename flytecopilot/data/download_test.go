@@ -49,6 +49,7 @@ func TestHandleBlobMultipart(t *testing.T) {
 				t.Errorf("Failed to delete directory: %v", err)
 			}
 		}()
+		d.allowedDirectories = []string{filepath.Dir(testPath)}
 
 		result, err := d.handleBlob(context.Background(), blob, testPath)
 		assert.NoError(t, err)
@@ -90,6 +91,7 @@ func TestHandleBlobMultipart(t *testing.T) {
 				t.Errorf("Failed to delete directory: %v", err)
 			}
 		}()
+		d.allowedDirectories = []string{filepath.Dir(toPath)}
 
 		result, err := d.handleBlob(context.Background(), blob, toPath)
 		assert.Error(t, err)
@@ -122,6 +124,7 @@ func TestHandleBlobSinglePart(t *testing.T) {
 			t.Errorf("Failed to delete file: %v", err)
 		}
 	}()
+	d.allowedDirectories = []string{filepath.Dir(toPath)}
 
 	result, err := d.handleBlob(context.Background(), blob, toPath)
 	assert.NoError(t, err)
@@ -154,7 +157,7 @@ func TestHandleBlobHTTP(t *testing.T) {
 			t.Errorf("Failed to delete file: %v", err)
 		}
 	}()
-
+	d.allowedDirectories = []string{filepath.Dir(toPath)}
 	result, err := d.handleBlob(context.Background(), blob, toPath)
 	assert.NoError(t, err)
 	assert.Equal(t, toPath, result)
@@ -230,6 +233,7 @@ func TestRecursiveDownload(t *testing.T) {
 				t.Errorf("Failed to delete directory: %v", err)
 			}
 		}()
+		d.allowedDirectories = []string{filepath.Dir(toPath)}
 
 		downloadConfigs := map[string]FileIOConfig{
 			"input1": {Path: filepath.Join(toPath, "input1"), VariableName: "input1"},
@@ -311,6 +315,7 @@ func TestRecursiveDownload(t *testing.T) {
 				t.Errorf("Failed to delete directory: %v", err)
 			}
 		}()
+		d.allowedDirectories = []string{filepath.Dir(toPath)}
 
 		downloadConfigs := map[string]FileIOConfig{
 			"input1": {Path: filepath.Join(toPath, "input1"), VariableName: "input1"},
@@ -369,6 +374,7 @@ func TestHandleScalar(t *testing.T) {
 				t.Errorf("Failed to delete directory: %v", err)
 			}
 		}()
+		d.allowedDirectories = []string{filepath.Dir(toPath)}
 
 		scalar := &core.Scalar{
 			Value: &core.Scalar_Union{

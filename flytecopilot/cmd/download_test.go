@@ -52,6 +52,7 @@ func TestDownloadOptions_Download(t *testing.T) {
 			assert.NoError(t, os.RemoveAll(tmpDir))
 		}()
 		dopts.localDirectoryPath = tmpDir
+		dopts.executionVolumeFlowsSubfolderPath = tmpDir
 
 		s := promutils.NewTestScope()
 		store, err := storage.NewDataStore(&storage.Config{Type: storage.TypeMemory}, s.NewSubScope("storage"))
@@ -74,6 +75,8 @@ func TestDownloadOptions_Download(t *testing.T) {
 			assert.NoError(t, os.RemoveAll(tmpDir))
 		}()
 		dopts.localDirectoryPath = tmpDir
+		dopts.executionVolumeFlowsSubfolderPath = tmpDir
+		dopts.allowedDirectories = []string{tmpDir}
 
 		s := promutils.NewTestScope()
 		store, err := storage.NewDataStore(&storage.Config{Type: storage.TypeMemory}, s.NewSubScope("storage"))
@@ -100,6 +103,8 @@ func TestDownloadOptions_Download(t *testing.T) {
 			assert.NoError(t, os.RemoveAll(tmpDir))
 		}()
 		dopts.localDirectoryPath = tmpDir
+		dopts.executionVolumeFlowsSubfolderPath = tmpDir
+		dopts.allowedDirectories = []string{tmpDir}
 
 		s := promutils.NewTestScope()
 		store, err := storage.NewDataStore(&storage.Config{Type: storage.TypeMemory}, s.NewSubScope("storage"))
@@ -144,6 +149,8 @@ func TestDownloadOptions_Download(t *testing.T) {
 			assert.NoError(t, os.RemoveAll(tmpDir))
 		}()
 		dopts.localDirectoryPath = tmpDir
+		dopts.executionVolumeFlowsSubfolderPath = tmpDir
+		dopts.allowedDirectories = []string{tmpDir}
 
 		s := promutils.NewTestScope()
 		store, err := storage.NewDataStore(&storage.Config{Type: storage.TypeMemory}, s.NewSubScope("storage"))

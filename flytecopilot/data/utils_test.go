@@ -54,31 +54,41 @@ func TestIsFileReadable(t *testing.T) {
 }
 
 func TestUploadFile(t *testing.T) {
-	tmpFolderLocation := ""
-	tmpPrefix := "util_test"
-
-	tmpDir, err := os.MkdirTemp(tmpFolderLocation, tmpPrefix)
+	tmpDir, err := os.MkdirTemp("", "util_test")
 	assert.NoError(t, err)
 	defer func() {
 		assert.NoError(t, os.RemoveAll(tmpDir))
 	}()
 
-	exist := path.Join(tmpDir, "exist-file")
+	allowedRoot := path.Join(tmpDir, "allowed")
+	assert.NoError(t, os.MkdirAll(allowedRoot, os.ModePerm))
+	oldAllowed := AllowedDirectories
+	AllowedDirectories = []string{allowedRoot}
+	defer func() { AllowedDirectories = oldAllowed }()
+
+	exist := path.Join(allowedRoot, "exist-file")
 	data := []byte("data")
 	l := int64(len(data))
 	assert.NoError(t, os.WriteFile(exist, data, os.ModePerm)) // #nosec G306
-	nonExist := path.Join(tmpDir, "non-exist-file")
+
+	outsideFile := path.Join(tmpDir, "outside", "secret-file")
+	assert.NoError(t, os.MkdirAll(path.Dir(outsideFile), os.ModePerm))
+	assert.NoError(t, os.WriteFile(outsideFile, data, os.ModePerm)) // #nosec G306
+	symlinkRelPath := "escape-link"
+	assert.NoError(t, os.Symlink(outsideFile, path.Join(allowedRoot, symlinkRelPath)))
 
 	store, err := storage.NewDataStore(&storage.Config{Type: storage.TypeMemory}, promutils.NewTestScope())
 	assert.NoError(t, err)
 
 	ctx := context.TODO()
-	assert.NoError(t, UploadFileToStorage(ctx, exist, "exist", l, store))
+	assert.NoError(t, UploadFileToStorage(ctx, allowedRoot, "exist-file", "exist", l, store))
 	m, err := store.Head(ctx, "exist")
 	assert.True(t, m.Exists())
 	assert.NoError(t, err)
 
-	assert.Error(t, UploadFileToStorage(ctx, nonExist, "nonExist", l, store))
+	assert.Error(t, UploadFileToStorage(ctx, allowedRoot, "non-exist-file", "nonExist", l, store))
+	// symlink appears under allowedRoot but resolves outside it; OpenInRoot must reject this
+	assert.Error(t, UploadFileToStorage(ctx, allowedRoot, symlinkRelPath, "disallowed", l, store))
 }
 
 func TestDownloadFromHttp(t *testing.T) {

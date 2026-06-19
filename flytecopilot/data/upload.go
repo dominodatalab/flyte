@@ -29,6 +29,7 @@ type Uploader struct {
 	store                   *storage.DataStore
 	aggregateOutputFileName string
 	errorFileName           string
+	allowedDirectories      []string
 }
 
 type dirFile struct {
@@ -90,11 +91,15 @@ func (u Uploader) handleBlobType(ctx context.Context, localPath string, toPath s
 		defer cancel()
 		fileUploader := make([]futures.Future, 0, len(files))
 		for _, f := range files {
-			pth := f.path
+			path := f.path
 			ref := f.ref
 			size := f.info.Size()
 			fileUploader = append(fileUploader, futures.NewAsyncFuture(childCtx, func(i2 context.Context) (i interface{}, e error) {
-				return nil, UploadFileToStorage(i2, pth, ref, size, u.store)
+				rootDir, relPath, err := getAllowedRootDirectoryAndRelativePath(path, u.allowedDirectories)
+				if err != nil {
+					return nil, errors.Wrapf(err, "failed to get allowed root directory and relative path for file at path %s", path)
+				}
+				return nil, UploadFileToStorage(i2, rootDir, relPath, ref, size, u.store)
 			}))
 		}
 
@@ -109,8 +114,12 @@ func (u Uploader) handleBlobType(ctx context.Context, localPath string, toPath s
 		return coreutils.MakeLiteralForBlob(toPath, false, ""), nil
 	}
 	size := info.Size()
+	rootDir, relPath, err := getAllowedRootDirectoryAndRelativePath(fpath, u.allowedDirectories)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get allowed root directory and relative path for file at path %s", fpath)
+	}
 	// Should we make this a go routine as well, so that we can introduce timeouts
-	return coreutils.MakeLiteralForBlob(toPath, false, ""), UploadFileToStorage(ctx, fpath, toPath, size, u.store)
+	return coreutils.MakeLiteralForBlob(toPath, false, ""), UploadFileToStorage(ctx, rootDir, relPath, toPath, size, u.store)
 }
 
 // uploadConfigs must contain an entry for every output variable
@@ -195,11 +204,12 @@ func (u Uploader) RecursiveUpload(ctx context.Context, vars *core.VariableMap, u
 	return nil
 }
 
-func NewUploader(_ context.Context, store *storage.DataStore, format core.DataLoadingConfig_LiteralMapFormat, mode core.IOStrategy_UploadMode, errorFileName string) Uploader {
+func NewUploader(_ context.Context, store *storage.DataStore, format core.DataLoadingConfig_LiteralMapFormat, mode core.IOStrategy_UploadMode, errorFileName string, allowedDirectories []string) Uploader {
 	return Uploader{
-		format:        format,
-		store:         store,
-		errorFileName: errorFileName,
-		mode:          mode,
+		format:             format,
+		store:              store,
+		errorFileName:      errorFileName,
+		mode:               mode,
+		allowedDirectories: allowedDirectories,
 	}
 }

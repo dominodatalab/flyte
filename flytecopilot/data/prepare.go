@@ -11,13 +11,13 @@ import (
 )
 
 type Preparer struct {
-	isGitBased          bool
-	executionVolumePath string
+	isGitBased                        bool
+	executionVolumeFlowsSubfolderPath string
 }
 
 func (p Preparer) PrepareDataDirectories(ctx context.Context) error {
-	logger.Infof(ctx, "Preparing data directories for execution volume at [%s]", p.executionVolumePath)
-	defer logger.Infof(ctx, "Exited preparing data directories for execution volume at [%s]", p.executionVolumePath)
+	logger.Infof(ctx, "Preparing data directories for execution volume at [%s]", p.executionVolumeFlowsSubfolderPath)
+	defer logger.Infof(ctx, "Exited preparing data directories for execution volume at [%s]", p.executionVolumeFlowsSubfolderPath)
 	directoriesToRemove := AllowedDirectories
 	var directoriesToCreate []string
 	if p.isGitBased {
@@ -26,7 +26,7 @@ func (p Preparer) PrepareDataDirectories(ctx context.Context) error {
 		directoriesToCreate = AllowedDirectoriesLegacy
 	}
 	for _, path := range directoriesToRemove {
-		dir := filepath.Join(p.executionVolumePath, path)
+		dir := filepath.Join(p.executionVolumeFlowsSubfolderPath, path)
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
 			logger.Infof(ctx, "Temporary data directory does not exist: %s", dir)
 		} else if err != nil {
@@ -40,7 +40,7 @@ func (p Preparer) PrepareDataDirectories(ctx context.Context) error {
 	}
 
 	for _, path := range directoriesToCreate {
-		dir := filepath.Join(p.executionVolumePath, path)
+		dir := filepath.Join(p.executionVolumeFlowsSubfolderPath, path)
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 			return errors.Wrapf(err, "failed to create temporary data directory: %s", dir)
 		}
@@ -52,9 +52,9 @@ func (p Preparer) PrepareDataDirectories(ctx context.Context) error {
 	return nil
 }
 
-func NewPreparer(_ context.Context, executionVolumePath string, isGitBased bool) Preparer {
+func NewPreparer(_ context.Context, executionVolumeFlowsSubfolderPath string, isGitBased bool) Preparer {
 	return Preparer{
-		executionVolumePath: executionVolumePath,
-		isGitBased:          isGitBased,
+		executionVolumeFlowsSubfolderPath: executionVolumeFlowsSubfolderPath,
+		isGitBased:                        isGitBased,
 	}
 }

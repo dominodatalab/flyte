@@ -1,8 +1,10 @@
 package data
 
 import (
+	"maps"
 	"os"
 	"path"
+	"slices"
 	"testing"
 
 	"github.com/flyteorg/flyte/flyteidl/gen/pb-go/flyteidl/core"
@@ -127,7 +129,7 @@ func TestHydrateInputOutputConfigs(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			configs := HydrateInputOutputConfigs(tt.configs, tt.vars, tt.localDirectoryPath)
+			configs := HydrateInputOutputConfigs(tt.configs, slices.Collect(maps.Keys(tt.vars.GetVariables())), tt.localDirectoryPath)
 			assert.Equal(t, tt.expectedConfigs, configs)
 		})
 	}
