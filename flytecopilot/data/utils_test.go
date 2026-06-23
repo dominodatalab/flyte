@@ -81,14 +81,14 @@ func TestUploadFile(t *testing.T) {
 	assert.NoError(t, err)
 
 	ctx := context.TODO()
-	assert.NoError(t, UploadFileToStorage(ctx, allowedRoot, "exist-file", "exist", l, store))
+	assert.NoError(t, UploadFileToStorage(ctx, allowedRoot, "exist-file", "exist", l, store, UploadFileRetryMaxAttempts))
 	m, err := store.Head(ctx, "exist")
 	assert.True(t, m.Exists())
 	assert.NoError(t, err)
 
-	assert.Error(t, UploadFileToStorage(ctx, allowedRoot, "non-exist-file", "nonExist", l, store))
+	assert.Error(t, UploadFileToStorage(ctx, allowedRoot, "non-exist-file", "nonExist", l, store, UploadFileRetryMaxAttempts))
 	// symlink appears under allowedRoot but resolves outside it; OpenInRoot must reject this
-	assert.Error(t, UploadFileToStorage(ctx, allowedRoot, symlinkRelPath, "disallowed", l, store))
+	assert.Error(t, UploadFileToStorage(ctx, allowedRoot, symlinkRelPath, "disallowed", l, store, UploadFileRetryMaxAttempts))
 }
 
 func TestDownloadFromHttp(t *testing.T) {

@@ -40,14 +40,15 @@ type UploadOptions struct {
 	allowedDirectories                []string
 	uploadConfigFilePath              string
 	// Non primitive types will be dumped in this output format
-	metadataFormat        string
-	uploadMode            string
-	timeout               time.Duration
-	containerStartTimeout time.Duration
-	typedInterface        []byte
-	startWatcherType      containerwatcher.WatcherType
-	exitWatcherType       containerwatcher.WatcherType
-	containerInfo         containerwatcher.ContainerInformation
+	metadataFormat             string
+	uploadMode                 string
+	timeout                    time.Duration
+	containerStartTimeout      time.Duration
+	typedInterface             []byte
+	startWatcherType           containerwatcher.WatcherType
+	exitWatcherType            containerwatcher.WatcherType
+	containerInfo              containerwatcher.ContainerInformation
+	uploadFileRetryMaxAttempts int
 }
 
 func (u *UploadOptions) createWatcher(ctx context.Context, w containerwatcher.WatcherType) (containerwatcher.Watcher, error) {
@@ -159,6 +160,7 @@ func (u *UploadOptions) uploader(ctx context.Context) error {
 		core.IOStrategy_UploadMode(m),
 		ErrorFile,
 		allowedDirectories,
+		u.uploadFileRetryMaxAttempts,
 	)
 
 	childCtx, cancelFn = context.WithTimeout(ctx, u.timeout)
@@ -219,5 +221,6 @@ func NewUploadCommand(opts *RootOptions) *cobra.Command {
 	uploadCmd.Flags().StringVarP(&uploadOptions.containerInfo.Name, "watch-container", "", "", "For KubeAPI watcher, Wait for this container to exit.")
 	uploadCmd.Flags().StringVarP(&uploadOptions.containerInfo.Namespace, "namespace", "", "", "For KubeAPI watcher, Namespace of the pod [optional]")
 	uploadCmd.Flags().StringVarP(&uploadOptions.containerInfo.PodName, "pod-name", "", "", "For KubeAPI watcher, Name of the pod [optional].")
+	uploadCmd.Flags().IntVarP(&uploadOptions.uploadFileRetryMaxAttempts, "upload-file-retry-max-attempts", "", data.UploadFileRetryMaxAttempts, "Maximum number of attempts to upload a file to storage. Default is 5.")
 	return uploadCmd
 }

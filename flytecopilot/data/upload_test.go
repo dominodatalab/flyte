@@ -55,6 +55,7 @@ func TestUploader_RecursiveUpload(t *testing.T) {
 			core.IOStrategy_UPLOAD_ON_EXIT,
 			"error",
 			[]string{tmpDir},
+			UploadFileRetryMaxAttempts,
 		)
 		assert.NoError(t, u.RecursiveUpload(context.TODO(), vmap, uploadConfigs, errorFilePath, outputRef, rawRef))
 

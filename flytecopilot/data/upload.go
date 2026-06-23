@@ -26,10 +26,11 @@ type Uploader struct {
 	format core.DataLoadingConfig_LiteralMapFormat
 	mode   core.IOStrategy_UploadMode
 	// TODO support multiple buckets
-	store                   *storage.DataStore
-	aggregateOutputFileName string
-	errorFileName           string
-	allowedDirectories      []string
+	store                      *storage.DataStore
+	aggregateOutputFileName    string
+	errorFileName              string
+	allowedDirectories         []string
+	uploadFileRetryMaxAttempts int
 }
 
 type dirFile struct {
@@ -99,7 +100,7 @@ func (u Uploader) handleBlobType(ctx context.Context, localPath string, toPath s
 				if err != nil {
 					return nil, errors.Wrapf(err, "failed to get allowed root directory and relative path for file at path %s", path)
 				}
-				return nil, UploadFileToStorage(i2, rootDir, relPath, ref, size, u.store)
+				return nil, UploadFileToStorage(i2, rootDir, relPath, ref, size, u.store, u.uploadFileRetryMaxAttempts)
 			}))
 		}
 
@@ -119,7 +120,7 @@ func (u Uploader) handleBlobType(ctx context.Context, localPath string, toPath s
 		return nil, errors.Wrapf(err, "failed to get allowed root directory and relative path for file at path %s", fpath)
 	}
 	// Should we make this a go routine as well, so that we can introduce timeouts
-	return coreutils.MakeLiteralForBlob(toPath, false, ""), UploadFileToStorage(ctx, rootDir, relPath, toPath, size, u.store)
+	return coreutils.MakeLiteralForBlob(toPath, false, ""), UploadFileToStorage(ctx, rootDir, relPath, toPath, size, u.store, u.uploadFileRetryMaxAttempts)
 }
 
 // uploadConfigs must contain an entry for every output variable
@@ -204,12 +205,13 @@ func (u Uploader) RecursiveUpload(ctx context.Context, vars *core.VariableMap, u
 	return nil
 }
 
-func NewUploader(_ context.Context, store *storage.DataStore, format core.DataLoadingConfig_LiteralMapFormat, mode core.IOStrategy_UploadMode, errorFileName string, allowedDirectories []string) Uploader {
+func NewUploader(_ context.Context, store *storage.DataStore, format core.DataLoadingConfig_LiteralMapFormat, mode core.IOStrategy_UploadMode, errorFileName string, allowedDirectories []string, maxAttempts int) Uploader {
 	return Uploader{
-		format:             format,
-		store:              store,
-		errorFileName:      errorFileName,
-		mode:               mode,
-		allowedDirectories: allowedDirectories,
+		format:                     format,
+		store:                      store,
+		errorFileName:              errorFileName,
+		mode:                       mode,
+		allowedDirectories:         allowedDirectories,
+		uploadFileRetryMaxAttempts: maxAttempts,
 	}
 }
