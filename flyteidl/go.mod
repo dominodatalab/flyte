@@ -22,7 +22,7 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20251202230838-ff82c1b0f217
 	google.golang.org/grpc v1.79.3
 	google.golang.org/protobuf v1.36.10
-	k8s.io/apimachinery v0.29.0-alpha.3
+	k8s.io/apimachinery v0.28.15
 	k8s.io/client-go v0.28.15
 )
 
@@ -129,7 +129,7 @@ retract (
 replace (
 	github.com/flyteorg/flyte/flytestdlib => ../flytestdlib
 	k8s.io/api => k8s.io/api v0.28.15
-	k8s.io/apimachinery => k8s.io/apimachinery v0.29.0-alpha.3
+	k8s.io/apimachinery => k8s.io/apimachinery v0.28.15
 	k8s.io/client-go => k8s.io/client-go v0.28.15
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.16.2
 )

@@ -44,7 +44,7 @@ require (
 	gorm.io/gorm v1.25.4
 	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.28.15
-	k8s.io/apimachinery v0.29.0-alpha.3
+	k8s.io/apimachinery v0.28.15
 	k8s.io/client-go v0.28.15
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 	sigs.k8s.io/controller-runtime v0.0.0-00010101000000-000000000000
@@ -157,7 +157,7 @@ replace (
 	github.com/flyteorg/flyte/flytepropeller => ../flytepropeller
 	github.com/flyteorg/flyte/flytestdlib => ../flytestdlib
 	k8s.io/api => k8s.io/api v0.28.15
-	k8s.io/apimachinery => k8s.io/apimachinery v0.29.0-alpha.3
+	k8s.io/apimachinery => k8s.io/apimachinery v0.28.15
 	k8s.io/client-go => k8s.io/client-go v0.28.15
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.16.2
 )
