@@ -59,8 +59,8 @@ func getAllowedRootDirectoryAndRelativePath(path string, allowedDirectories []st
 }
 
 // Uploads a file to the data store.
-func UploadFileToStorage(ctx context.Context, rootDir string, relPath string, toPath storage.DataReference, size int64, store *storage.DataStore) error {
-	return retryOnSpecificErrors(ctx, uploadFileRetryMaxAttemptIndex, uploadFileRetryDelay, func() error {
+func UploadFileToStorage(ctx context.Context, rootDir string, relPath string, toPath storage.DataReference, size int64, store *storage.DataStore, attempts int) error {
+	return retryOnSpecificErrors(ctx, attempts, uploadFileRetryDelay, func() error {
 		f, err := os.OpenInRoot(rootDir, relPath)
 		if err != nil {
 			return errors.Wrapf(err, "failed to open file at path %s/%s", rootDir, relPath)

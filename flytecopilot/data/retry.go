@@ -8,14 +8,14 @@ import (
 )
 
 const (
-	uploadFileRetryMaxAttemptIndex = 5
-	uploadFileRetryDelay           = 2 * time.Second
+	UploadFileRetryMaxAttempts = 5
+	uploadFileRetryDelay       = 2 * time.Second
 )
 
 // See flyteadmin/pkg/async.RetryOnSpecificErrors
 func retryOnSpecificErrors(ctx context.Context, attempts int, delay time.Duration, f func() error, isErrorRetryable func(error) bool) error {
 	var err error
-	for attempt := 0; attempt <= attempts; attempt++ {
+	for attempt := 1; attempt <= attempts; attempt++ {
 		err = f()
 		if err == nil {
 			return nil
